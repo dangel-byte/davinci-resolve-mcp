@@ -247,7 +247,8 @@ def diagnostics(token_saved):
         tail = "".join(LOG_FILE.read_text(encoding="utf-8").splitlines(True)[-40:])
     except OSError:
         tail = "(no log yet)"
-    return (f"Mediastream panel diagnostics\nOS: {platform.platform()}\nPython: {platform.python_version()}\n"
+    from . import __version__
+    return (f"Mediastream panel diagnostics {__version__}\nOS: {platform.platform()}\nPython: {platform.python_version()}\n"
             f"Token saved: {token_saved}\nLog file: {LOG_FILE}\n--- last log lines ---\n{tail}")
 
 
@@ -279,6 +280,9 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
                     return {"error": "token rejected by Platform"}
             kc.save(t)
             return {"saved": True}
+        if action == "update_status":
+            from .update import status
+            return status(_prefs_get(), PREFS_FILE.with_name("update.json"))
         if action == "diagnostics":
             return {"text": diagnostics(bool(kc.load()))}
         if action == "token_delete":
@@ -367,11 +371,8 @@ def make_server(call, key, port=0):
     return ThreadingHTTPServer(("127.0.0.1", port), H)
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--no-open", action="store_true")
-    a = ap.parse_args()
+def build(port):
+    """Wire the panel to Resolve and bind the server. Returns (server, url)."""
     init_log()
     from .actions import make_mediastream
     from .resolve import ScriptAdapter
@@ -379,10 +380,18 @@ def main():
     key = secrets.token_urlsafe(24)
     call = make_panel_call(make_mediastream(resolve), resolve.presets)
     try:
-        srv = make_server(call, key, a.port)
+        srv = make_server(call, key, port)
     except OSError:  # port busy (another panel, other software): let the OS pick one
         srv = make_server(call, key, 0)
-    url = f"http://127.0.0.1:{srv.server_address[1]}/"
+    return srv, f"http://127.0.0.1:{srv.server_address[1]}/"
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--port", type=int, default=8765)
+    ap.add_argument("--no-open", action="store_true")
+    a = ap.parse_args()
+    srv, url = build(a.port)
     print(f"Mediastream panel: {url}  (Ctrl+C to stop)", flush=True)
     if not a.no_open:
         webbrowser.open(url)

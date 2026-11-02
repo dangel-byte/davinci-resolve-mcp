@@ -207,3 +207,24 @@ class ExportGuard(unittest.TestCase):
         self.assertIn("error", call("job_start", {"action": "export_upload", "params": {}}))
         self.assertIn("job_id", call("job_start", {"action": "upload", "params": {}}))  # other jobs fine
         gate.set()
+
+
+class UpdateCheck(unittest.TestCase):
+    def test_newer(self):
+        from mediastream_resolve.update import newer
+        self.assertTrue(newer("0.10.0", "0.9.9"))
+        self.assertFalse(newer("0.1.0", "0.1.0"))
+        self.assertFalse(newer("junk", "0.1.0"))
+
+    def test_off_without_url_and_daily_cache(self):
+        import io, json, pathlib, tempfile
+        from mediastream_resolve import update
+        cache = pathlib.Path(tempfile.mkdtemp()) / "u.json"
+        self.assertFalse(update.status({}, cache)["available"])     # no URL: no call
+        calls = []
+        def fetch(u): calls.append(u); return io.StringIO(json.dumps({"version": "9.0.0", "url": "https://x/y"}))
+        r = update.status({"update_url": "https://m/manifest.json"}, cache, fetch)
+        self.assertEqual((r["available"], r["latest"], r["url"]), (True, "9.0.0", "https://x/y"))
+        update.status({"update_url": "https://m/manifest.json"}, cache, fetch)
+        self.assertEqual(len(calls), 1)                              # cached for a day
+        self.assertFalse(update.status({"update_url": "http://insecure/m.json"}, cache, fetch)["available"])
