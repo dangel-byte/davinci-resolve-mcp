@@ -228,3 +228,39 @@ class UpdateCheck(unittest.TestCase):
         update.status({"update_url": "https://m/manifest.json"}, cache, fetch)
         self.assertEqual(len(calls), 1)                              # cached for a day
         self.assertFalse(update.status({"update_url": "http://insecure/m.json"}, cache, fetch)["available"])
+
+
+class QaRegressions(unittest.TestCase):
+    def test_token_saves_when_offline(self):
+        from mediastream_resolve.panel import make_panel_call
+        class KC:
+            tok = None; persistent = True
+            def load(self): return self.tok
+            def save(self, t): self.tok = t
+            def delete(self): self.tok = None
+        kc = KC()
+        call = make_panel_call(lambda a, p: {}, lambda: [], kc)
+        def down(**k): raise ms.urllib.error.URLError("offline")
+        with mock.patch.object(ms, "search", down):
+            self.assertEqual(call("token_save", {"token": "abc"}), {"saved": True})
+
+    def test_http_survives_non_object_bodies(self):
+        import http.client, json, threading
+        from mediastream_resolve.panel import make_server
+        srv = make_server(lambda a, p: {"ok": a}, "K", 0)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        for body in (b"[]", b"null", b'"x"', b"5", b"{nope", b'{"action":5}', b'{"action":"a","params":[1]}'):
+            c = http.client.HTTPConnection("127.0.0.1", srv.server_address[1], timeout=5)
+            c.request("POST", "/api", body, {"X-Panel-Key": "K"})
+            r = c.getresponse()
+            self.assertEqual(r.status, 200, body)
+            self.assertIn("error", json.loads(r.read()), body)
+        srv.shutdown()
+
+    def test_dispatcher_turns_bad_params_and_network_errors_into_errors(self):
+        from mediastream_resolve.actions import make_mediastream
+        m = make_mediastream(object())
+        self.assertIn("error", m("search", {"limit": "abc"}))
+        def dns(*a, **k): raise ms.urllib.error.URLError("dns")
+        with mock.patch.object(ms, "search", dns):
+            self.assertIn("error", m("search", {}))

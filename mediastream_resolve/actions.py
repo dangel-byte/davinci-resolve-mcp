@@ -76,5 +76,9 @@ def make_mediastream(resolve):
             return _err(exc, exc.code)
         except KeyError as exc:
             return _err(f"{action} requires {exc.args[0]}")
+        except (ValueError, TypeError) as exc:
+            return _err(f"invalid parameter for {action}: {exc}")
+        except OSError as exc:  # network down, DNS, timeout, disk
+            return _err(f"{type(exc).__name__}: {exc}", "NETWORK_OR_DISK_ERROR")
         return _err(f"unknown action {action!r}; use one of {ACTIONS}", "UNKNOWN_ACTION")
     return mediastream

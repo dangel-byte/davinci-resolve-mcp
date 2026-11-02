@@ -278,6 +278,8 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
             except MediastreamError as e:
                 if str(e).startswith(("HTTP 401", "HTTP 403")):
                     return {"error": "token rejected by Platform"}
+            except OSError:  # offline, DNS, timeout: cannot validate now, save anyway
+                pass
             kc.save(t)
             return {"saved": True}
         if action == "update_status":
@@ -357,11 +359,16 @@ def make_server(call, key, port=0):
             try:
                 n = min(int(self.headers.get("Content-Length", 0)), 1 << 20)
                 req = json.loads(self.rfile.read(n) or b"{}")
-                res = call(req.get("action", ""), req.get("params") or {})
+                if not isinstance(req, dict) or not isinstance(req.get("action", ""), str):
+                    raise ValueError("body must be an object with a string action")
+                params = req.get("params") or {}
+                if not isinstance(params, dict):
+                    raise ValueError("params must be an object")
+                res = call(req.get("action", ""), params)
             except Exception as e:  # surface to the UI instead of a dropped socket
                 res = {"error": f"{type(e).__name__}: {e}"}
             err = res.get("error") if isinstance(res, dict) else None
-            log.info("%s %s", req.get("action", "?"),
+            log.info("%s %s", req.get("action", "?") if isinstance(req, dict) else "?",
                      ("ERROR " + str(err)[:200]) if err else "ok")
             self._send(200, json.dumps(res, default=str))
 
