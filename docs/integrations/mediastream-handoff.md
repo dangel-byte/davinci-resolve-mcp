@@ -1,62 +1,61 @@
-# Mediastream para DaVinci Resolve: traspaso a IT
+# Mediastream para DaVinci Resolve y Premiere Pro: entrega parcial a IT
 
-Portado desde `luchoahumada/premiere-uxp`. Rama `feat/mediastream-platform`. Este documento lista lo que queda para IT de Mediastream.
+Dos plugins que viven **dentro** de su programa (sin navegador, sin app aparte, sin bandeja):
 
-## Estado
+| | DaVinci Resolve | Premiere Pro |
+|---|---|---|
+| Versión | 0.1.0 | 1.1.0 |
+| Tipo | Workflow Integration (solo **Studio**) | Panel UXP (`.ccx`, Premiere 25.6+) |
+| Repo | `dangel-byte/davinci-resolve-mcp`, rama `feat/mediastream-platform` (público) | `dangel-byte/premiere-uxp`, ramas `main` y `parity/resolve-hardening` (**privado**: hay que invitar a IT) |
+| Origen | Portado de `luchoahumada/premiere-uxp` | Copia de `luchoahumada/premiere-uxp` (remoto `upstream`, solo lectura) |
+| Instalador | `Mediastream-Resolve-0.1.0.pkg` (macOS arm64, sin firmar) | `com.mediastream.premiere-1.1.0.ccx` (sin firmar) |
+| Guía | `Guia-Mediastream-DaVinci-Resolve.pdf` (12 págs.) | `Guia-Mediastream-Premiere-Pro.pdf` (11 págs.) |
 
-Funciona (probado con la API real de Platform, 17 tests offline):
-- Buscar, descargar el original y subir (chunks reanudables, reintentos, match exacto de la media subida).
-- Exportar timeline y subirlo; adjuntar `.srt`.
-- Watch folder: pide aprobación antes de subir cada archivo.
-- Panel local: token en Keychain/Credential Manager/libsecret, validado contra Platform al guardar, ES/EN/PT, cola de trabajos, log rotativo y "Copiar diagnóstico".
-- Seguridad de subida: allowlist de extensiones, sin carpetas ocultas, sin symlinks fuera de ruta, chequeo de disco.
+Kit con instaladores, PDF y capturas: `mediastream-plugins-kit/`. Fuentes de las guías: `docs/tutorial/` en cada repo (`build_pdf.py`). La tabla de paridad entre ambos está en `PARIDAD.md` del repo de Premiere.
 
-Paquete: `mediastream_resolve/` (stdlib, sin dependencias). Plugin Studio: `resolve-plugin/com.mediastream.platform/` + `scripts/install_mediastream_plugin.py`. Panel web (única vía en Resolve Free): `python3 -m mediastream_resolve.panel`.
+## Qué funciona (probado)
+
+Contra Platform real y un Resolve Studio real:
+- Buscar, descargar el original e importar al Media Pool.
+- Subir archivo y exportar el timeline abierto (render, verificación, subida por chunks con reintentos, título, publicar, `.srt`).
+- Carpeta vigilada con aprobación manual (Resolve) y cola con línea base (Premiere).
+- Token validado al guardar (Keychain en Resolve; almacenamiento del plugin en Premiere).
+- El motor congelado del plugin de Resolve alcanza Resolve (38 presets), Platform y el llavero.
+- Pruebas automáticas: 25 del cliente (Resolve) y 4 de la capa API (Premiere, `node --test`). La suite completa del repo da los mismos 6 fallos y 5 errores de importación que ya tenía `main`.
+
+## Sin verificar (necesita un equipo real)
+
+- Instalar el `.pkg` y el `.ccx` en un equipo limpio y abrir cada plugin **dentro** de Resolve / Premiere.
+- Resolve: atajos Cmd+F, Cmd+, y Cmd+1-2 / Esc en la ventana del plugin; barra de estado con token guardado; si la carpeta vigilada sigue activa al cerrar la ventana. No automatizar con teclas: cuelga Resolve.
+- Premiere: botón **Embed**, línea base de la carpeta vigilada, subida del `.srt` (ahora en español por defecto) y validación del token en la pantalla de inicio. Todo revisado en código y con pruebas de la capa API, no ejecutado dentro de Premiere.
+- Windows, Linux y Mac Intel: el código tiene rutas para Windows y Linux, sin probar; el instalador es solo macOS arm64.
 
 ## Decisiones de IT / negocio
 
-1. **Repo de la organización.** La org `mediastream` rechazó el fork (403). Hoy vive en `dangel-byte/davinci-resolve-mcp`. Hace falta un repo en la org y que alguien con permisos lo transfiera.
-2. **Windows en v1.** El código tiene rutas y credenciales para Windows y Linux, **sin probar**. Decidir si se prueba y se soporta.
-3. **Firma de código.** macOS: Apple Developer (99 USD/año) y notarización. Windows: certificado de firma. Sin firma, Gatekeeper/SmartScreen bloquean el instalador.
-4. **Distribución.** Canales de TV y usuarios personales. Opciones: `.pkg`/`.exe` firmado, o repo + script de instalación.
+1. **Repos en la organización.** La org `mediastream` rechazó el fork (403). Hoy viven en la cuenta personal `dangel-byte`; el de Premiere es privado. Hace falta que alguien con permisos cree repos en la org y los transfiera.
+2. **Firma.** macOS: Apple Developer (99 USD/año) y notarización. Windows: certificado de firma. Sin firma, Gatekeeper/SmartScreen avisan al instalar (el `.pkg` se abre con clic derecho → Abrir).
+3. **Windows en v1.** Decidir si se prueba y se soporta; el motor y el `.exe` hay que compilarlos en Windows (`packaging/build_engine.py`).
+4. **Distribución.** Canales de TV y usuarios personales. Opciones: `.pkg`/`.exe`/`.ccx` firmados, o repo + script de instalación. Para Premiere, decidir si va al Marketplace de Adobe.
+5. **Actualizaciones.** El aviso de versión está **apagado** hasta que IT publique un manifiesto (`{"version","url"}`) y configure `MEDIASTREAM_UPDATE_URL` o `update_url` en `prefs.json`. Nunca instala nada solo.
 
-## Pedidos al equipo de Platform
+## Preguntas para el equipo de Platform
 
-- Devolver el `media_id` en la respuesta de la sesión de upload (hoy el cliente busca la media por nombre de archivo).
+- **Tokens.** ¿Qué tipo de token debe usar el plugin (lectura/escritura de *Settings → API and Tokens*)? ¿Se pueden emitir **por usuario** y con alcance **solo de subida**? Hoy el plugin guarda un token con permisos de lectura, subida y publicación.
+- La respuesta de la sesión de upload no trae el `media_id`: el cliente encuentra la media por nombre de archivo. ¿Se puede devolver el id?
 - Endpoint para validar un token (hoy se valida con una búsqueda de 1 resultado).
-- Tokens con alcance solo de upload (el watch folder usa un token completo).
-- Endpoint de versión mínima del cliente (para el chequeo de actualización).
-- Las URLs de rendition devuelven 403; la descarga usa `/video/{media_id}.mp4`. Confirmar que es estable.
-- Hay 5 medias de prueba en Platform con título `TEST-mcp...`. El cliente no puede borrarlas; borrarlas desde la web.
+- Endpoint de versión mínima del cliente.
+- Las URLs de rendition devuelven 403; la descarga usa `/video/{media_id}.mp4`. ¿Es estable?
+- Una media **sin publicar** no aparece en la búsqueda ni se puede descargar (403 `NOT_PUBLISHED`). ¿Es el comportamiento esperado?
+- Premiere: el README original menciona «reemplazar media» y «abrir en Platform», pero el código del panel no los tiene. ¿Eran planes? Hace falta la URL de una media en Platform para «abrir en Platform».
 
-## Sin verificar dentro de Resolve
+## Limpieza pendiente en Platform
 
-Probar a mano (no automatizar con teclas, cuelga Resolve):
-- Atajos Cmd+F, Cmd+, y Cmd+1-2 / Esc dentro de la ventana del plugin.
-- Activity strip con token guardado.
-- Si el watch folder sigue activo al cerrar la ventana.
-- Selector de carpetas nativo, drag-and-drop, progreso en %, miniaturas reales.
-- Resolve Free 21.1 no lista scripts Python: ahí solo sirve el panel web.
+El cliente no puede borrar medias; hay que borrarlas desde la web. Quedan medias de prueba con título `TEST-mcp…`, entre ellas:
+`TEST-mcp-final-qa` (`6ae90082cf86ea49aabf4690`), `TEST-mcp-final-render` (`6ae90185e57d409640b6bd6d`) y `TEST-mcp-publish` (`6ae9040a28a3a396934f00ba`, publicada), además de las cinco de pruebas anteriores.
 
-## Versión y Bridge (hechos)
+## Notas técnicas
 
-- Versión en `mediastream_resolve/__init__.py` (`__version__`, SemVer). Chequeo de actualización: **apagado hasta que IT lo configure**. Poner `update_url` (https) en `prefs.json` o la variable `MEDIASTREAM_UPDATE_URL`, apuntando a un JSON `{"version": "1.2.3", "url": "https://..."}`. Se consulta como máximo una vez al día, solo avisa (banner con enlace) y nunca instala. Para fijar versión: no configurar la URL, o `MEDIASTREAM_NO_UPDATE_CHECK=1`.
-- App de bandeja "Mediastream Bridge" (`mediastream_resolve/bridge.py`). Compilar en el SO destino: `python3 -m venv build-venv && build-venv/bin/pip install -r packaging/requirements-build.txt && build-venv/bin/python packaging/build_bridge.py`. Probado en macOS arm64 (36 MB, arranca y sirve el panel). **Windows/Linux sin probar.** El resultado sale **sin firmar**.
-- Modo Free: el Bridge no necesita Resolve Studio; se usa exportar a carpeta y el watch folder del panel.
-
-## Pendiente de IT (producto)
-
-(5) Instaladores firmados y notarizados (`.pkg`/`.exe`) y CI de releases. Publicar el manifiesto de versión. Probar el Bridge en Windows. Decidir si el Bridge arranca con el sistema.
-
-## Notas
-
-- Nunca incluir `WorkflowIntegration.node` de Blackmagic en el repo. El instalador lo copia desde la instalación de Resolve del usuario.
-- El token de API no se guarda en archivos ni en el log.
-
-## Paridad con el plugin de Premiere
-
-La copia local del plugin de Premiere (`~/Projects/premiere-uxp`, rama `parity/resolve-hardening`, remoto `upstream` solo lectura) se igualó con esta versión: reintentos de chunks, emparejado exacto del media subido, carpeta vigilada estable, `.srt` activado y validación de token. Esta versión incorporó a cambio la opción **publicar al subir** (`publish`) y la marca de vídeo vertical. Detalle en `PARIDAD.md` de ese repo. No portado a Resolve: el botón «SRT» de Premiere (importa solo el `.srt` de la transcripción IA de Platform). Premiere recibió a cambio el botón «Embed». Nota: el README de Premiere menciona «reemplazar media» y «abrir en Platform», pero el código del panel no los tiene.
-
-## Decisión: solo plugins dentro de cada programa (2026-11-02)
-
-Nada abre un navegador y no hay app aparte ni icono de barra de menú. En Resolve, el plugin de Workflow Integrations (solo Studio) muestra el panel en su propia ventana; el motor Python va congelado dentro de la carpeta del plugin (`packaging/build_engine.py`, `packaging/build_pkg_macos.sh`). Se eliminó el «Mediastream Bridge» (bandeja + navegador) y el soporte de Resolve Free. Kit de instalación con guías PDF: `docs/tutorial/` en cada repo (fuentes HTML, `build_pdf.py`, `make_screens.py`).
+- **Resolve.** El plugin es una carcasa fina (`resolve-plugin/com.mediastream.platform/main.js`) que arranca el motor Python congelado (`mediastream_resolve/`, solo biblioteca estándar) y muestra su página en la ventana del plugin. Compilar en el SO destino: `python3 -m venv build-venv && build-venv/bin/pip install -r packaging/requirements-build.txt && build-venv/bin/python packaging/build_engine.py dist && packaging/build_pkg_macos.sh dist`.
+- **Premiere.** `scripts/build-ccx.sh` empaqueta solo el código del panel, iconos y presets (el `.ccx` anterior incluía `.git`).
+- **Blackmagic.** No incluir nunca `WorkflowIntegration.node` en el repo: el instalador lo copia desde la instalación de Resolve del usuario. Requiere *Preferences → System → General → External scripting using → Local*.
+- **Seguridad.** El token no se guarda en archivos ni en el log. Subida con lista de extensiones permitidas, sin carpetas ocultas ni enlaces simbólicos. El servicio local escucha solo en `127.0.0.1` con clave por sesión.
