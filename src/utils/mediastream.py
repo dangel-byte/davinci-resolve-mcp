@@ -177,7 +177,7 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
     size = os.path.getsize(path)
     j = _json(_request("GET", _url("/api/media/upload", file_name=name, size=size, token=t), t))
     srv = re.sub(r"^http://", "https://", j["data"]["server"], flags=re.I)
-    mid = media_id(j["data"])
+    started = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() - 5))
     total = max(1, -(-size // CHUNK_BYTES))
     with open(path, "rb") as f:
         for i in range(1, total + 1):
@@ -188,16 +188,27 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
                                      "application/octet-stream")
             _request("POST", f"{srv}?resumableChunkNumber={i}", data=body,
                      headers={"Content-Type": ctype}, timeout=300).read()
+    # The upload session returns only the server URL, no media id: find the new media in
+    # the recent admin list by filename stem (Platform stores it as "<uuid>_<stem>.mp4").
+    stem = re.sub(r"[^a-z0-9]", "", os.path.splitext(name)[0].lower())
     media = None
     deadline = time.time() + poll_seconds
-    while mid and time.time() < deadline:
+    while not media and time.time() < deadline:
         try:
-            media = get(mid, admin=True, token=t)
+            recent = _json(_request("GET", _url("/api/media", admin="true", all="true",
+                                                sort="-date_created", limit=30, token=t), t)).get("data") or []
         except MediastreamError:
-            media = None
-        if media:
-            break
-        time.sleep(4)
+            recent = []
+        media = next((m for m in recent
+                      if stem in re.sub(r"[^a-z0-9]", "", str(m.get("title", "")).lower())
+                      and str(m.get("date_created", "")) >= started), None)
+        if not media:
+            time.sleep(4)
+    mid = media_id(media) if media else ""
+    if media and title and title != media.get("title"):
+        body = urllib.parse.urlencode({"token": t, "title": title}).encode()
+        _json(_request("POST", f"{BASE}/api/media/{urllib.parse.quote(mid)}", None, body,
+                       {"Content-Type": "application/x-www-form-urlencoded"}))
     return {"media_id": mid, "media": media, "title": title or name}
 
 

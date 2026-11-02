@@ -31983,9 +31983,10 @@ def mediastream(action: str, params: Optional[Dict[str, Any]] = None) -> Dict[st
             path = ms.download(p["media_id"], dest, token=tok)
             imported = None
             if _coerce_bool(p.get("import", True)):
-                mp = _get_mp()
-                clips = mp.ImportMedia([path]) if mp else None
-                imported = bool(clips)
+                _, _, mp, mp_err = _get_mp()
+                if mp_err:
+                    return _ok(path=path, imported=False, import_error=mp_err)
+                imported = bool(mp.ImportMedia([path]))
             return _ok(path=path, imported=imported)
         if action == "upload":
             if not p.get("path"):
