@@ -1,18 +1,27 @@
 """Install the Mediastream Workflow Integration plugin into DaVinci Resolve Studio (macOS).
 
-    venv/bin/python scripts/install_mediastream_plugin.py [--uninstall]
+    python scripts/install_mediastream_plugin.py [--uninstall]   (macOS, Windows, Linux)
 
 Then restart Resolve: Workspace > Workflow Integrations > Mediastream Platform.
 """
 import json
+import os
 import pathlib
 import shutil
 import sys
 
 REPO = pathlib.Path(__file__).resolve().parents[1]
 SRC = REPO / "resolve-plugin" / "com.mediastream.platform"
-ROOT = pathlib.Path("/Library/Application Support/Blackmagic Design/DaVinci Resolve")
-DEST = ROOT / "Workflow Integration Plugins" / "com.mediastream.platform"
+if sys.platform == "win32":  # ponytail: Windows/Linux paths from Blackmagic's docs, untested here
+    ROOT = pathlib.Path(os.environ.get("PROGRAMDATA", r"C:\ProgramData")) / "Blackmagic Design/DaVinci Resolve/Support"
+    PLUGINS = ROOT / "Workflow Integration Plugins"
+elif sys.platform == "darwin":
+    ROOT = pathlib.Path("/Library/Application Support/Blackmagic Design/DaVinci Resolve")
+    PLUGINS = ROOT / "Workflow Integration Plugins"
+else:
+    ROOT = pathlib.Path("/opt/resolve")
+    PLUGINS = ROOT / "Workflow Integration Plugins"
+DEST = PLUGINS / "com.mediastream.platform"
 NODE = ROOT / "Developer/Workflow Integrations/Examples/SamplePlugin/WorkflowIntegration.node"
 
 

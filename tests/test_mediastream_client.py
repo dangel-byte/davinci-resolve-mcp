@@ -82,6 +82,24 @@ class UploadSafety(unittest.TestCase):
             ms.time.sleep = orig
 
 
+class Portability(unittest.TestCase):
+    def test_default_dir_and_space_guard(self):
+        import os, tempfile
+        self.assertTrue(ms.default_media_dir().endswith("Mediastream"))
+        self.assertNotIn(tempfile.gettempdir(), ms.default_media_dir())
+        d = os.path.join(tempfile.mkdtemp(), "new")
+        ms.ensure_space(d, 1)                       # creates the folder, plenty of room
+        self.assertTrue(os.path.isdir(d))
+        with self.assertRaises(ms.DiskSpaceError):
+            ms.ensure_space(d, 1 << 60)
+
+    def test_keychain_without_store_keeps_token_in_memory(self):
+        from mediastream_resolve.panel import Keychain
+        k = Keychain(); k.kind = None
+        k.save("abc"); self.assertEqual((k.load(), k.persistent), ("abc", False))
+        k.delete(); self.assertIsNone(k.load())
+
+
 class WatcherScan(unittest.TestCase):
     def test_new_stable_file_uploads_once_with_srt(self):
         import os, tempfile
@@ -132,14 +150,14 @@ class PanelCall(unittest.TestCase):
 
     def test_token_never_returned_and_injected(self):
         call, kc, seen = self._call()
-        self.assertEqual(call("token_status", {}), {"saved": False})
+        self.assertEqual(call("token_status", {})["saved"], False)
         self.assertEqual(call("token_save", {"token": " abc "}), {"saved": True})
-        self.assertEqual(call("token_status", {}), {"saved": True})
+        self.assertEqual(call("token_status", {})["saved"], True)
         call("search", {"query": "x"})
         self.assertEqual(seen[-1][1]["token"], "abc")     # server-side injection
         self.assertNotIn("abc", str(call("prefs_get", {})))
         call("token_delete", {})
-        self.assertEqual(call("token_status", {}), {"saved": False})
+        self.assertEqual(call("token_status", {})["saved"], False)
 
     def test_job_start_allowlist(self):
         call, kc, seen = self._call()

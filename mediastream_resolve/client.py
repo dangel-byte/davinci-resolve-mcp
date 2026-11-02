@@ -8,6 +8,8 @@ it is never logged or persisted here.
 import json
 import os
 import re
+import shutil
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -24,11 +26,30 @@ class MediastreamError(RuntimeError):
     pass
 
 
+class DiskSpaceError(MediastreamError):
+    pass
+
+
 def token_from(token: Optional[str] = None) -> str:
     t = (token or os.environ.get("MEDIASTREAM_API_TOKEN") or "").strip()
     if not t:
         raise MediastreamError("missing API token: pass token or set MEDIASTREAM_API_TOKEN")
     return t
+
+
+def default_media_dir() -> str:
+    """Where downloads and renders go unless the user picks a folder (never the temp dir)."""
+    home = os.path.expanduser("~")
+    return os.path.join(home, "Movies" if sys.platform == "darwin" else "Videos", "Mediastream")
+
+
+def ensure_space(folder: str, need_bytes: int, what: str = "file") -> None:
+    """Refuse early, with a readable message, when the disk cannot hold `need_bytes` (+10%)."""
+    os.makedirs(folder, exist_ok=True)
+    free = shutil.disk_usage(folder).free
+    if free < need_bytes * 1.1:
+        raise DiskSpaceError(f"not enough disk space for the {what}: need {need_bytes / 1e9:.1f} GB, "
+                               f"{free / 1e9:.1f} GB free in {folder}")
 
 
 def check_path(path: str, exts) -> str:
@@ -176,20 +197,27 @@ def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] 
         candidates.append(urllib.parse.urlunsplit(sp._replace(
             query=urllib.parse.urlencode(dict(urllib.parse.parse_qsl(sp.query),
                                               download="true", admin_token="true", access_token=at)))))
-    title = re.sub(r"[^\w.\- ]+", "_", str((media or {}).get("title") or mid)).strip()[:80] or mid
+    # Windows also rejects names ending in "." or " "
+    title = re.sub(r"[^\w.\- ]+", "_", str((media or {}).get("title") or mid)).strip(" .")[:80] or mid
     os.makedirs(dest_dir, exist_ok=True)
     path = os.path.join(dest_dir, f"{title}__{mid}.mp4")
     part = path + ".part"
     last = None
     for url in candidates:
         try:
-            with _request("GET", url, t, timeout=300) as res, open(part, "wb") as f:
-                while True:
-                    b = res.read(1 << 20)
-                    if not b:
-                        break
-                    f.write(b)
+            with _request("GET", url, t, timeout=300) as res:
+                size = int(res.headers.get("Content-Length") or 0)
+                if size:
+                    ensure_space(dest_dir, size, "download")
+                with open(part, "wb") as f:
+                    while True:
+                        b = res.read(1 << 20)
+                        if not b:
+                            break
+                        f.write(b)
             break
+        except DiskSpaceError:
+            raise  # no point trying another rendition
         except MediastreamError as e:
             last = e
     else:

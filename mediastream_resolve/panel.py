@@ -5,15 +5,16 @@ window the Workflow Integration plugin shows).
 
 Loopback only. Every /api call needs the per-launch key embedded in the served page
 (a random website cannot POST to localhost without it). The API token lives in the macOS
-Keychain (service "mediastream-resolve") and is never sent back to the page; on other
-platforms it stays in this process's memory. Non-secret preferences go to
-~/.config/mediastream-resolve/prefs.json.
+OS credential store (service "mediastream-resolve") and is never sent back to the page;
+without one it stays in this process's memory. Non-secret preferences go to
+prefs.json under ~/.config/mediastream-resolve (%APPDATA% on Windows).
 """
 import argparse
 import json
 import os
 import pathlib
 import secrets
+import shutil
 import subprocess
 import sys
 import threading
@@ -22,40 +23,116 @@ import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PAGE_FILE = pathlib.Path(__file__).with_name("mediastream_panel.html")
-PREFS_FILE = pathlib.Path.home() / ".config" / "mediastream-resolve" / "prefs.json"
+_CFG = (pathlib.Path(os.environ.get("APPDATA") or pathlib.Path.home() / "AppData" / "Roaming")
+        if sys.platform == "win32" else pathlib.Path.home() / ".config")
+PREFS_FILE = _CFG / "mediastream-resolve" / "prefs.json"
 KEYCHAIN = ("mediastream-resolve", "api-token")
 LONG_ACTIONS = {"download", "upload", "export_upload", "subtitle"}
 
 
 class Keychain:
-    """macOS Keychain via `security -i` (the secret goes over stdin, never argv)."""
+    """OS credential store: macOS Keychain (`security -i`, secret over stdin), Windows
+    Credential Manager (ctypes), Linux `secret-tool` when installed. Without a store the
+    token lives in memory only (`persistent` is False) and is asked again next launch."""
 
     def __init__(self):
         self.mem = None
-        self.mac = sys.platform == "darwin"
+        self.kind = ("mac" if sys.platform == "darwin" else "win" if sys.platform == "win32"
+                     else "linux" if shutil.which("secret-tool") else None)
+
+    @property
+    def persistent(self):
+        return self.kind is not None
 
     def load(self):
-        if self.mem:
-            return self.mem
-        if self.mac:
-            r = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN[0],
-                                "-a", KEYCHAIN[1], "-w"], capture_output=True, text=True)
-            if r.returncode == 0:
-                self.mem = r.stdout.strip() or None
+        if not self.mem and self.kind:
+            self.mem = (getattr(self, "_load_" + self.kind)() or "").strip() or None
         return self.mem
 
     def save(self, token):
         self.mem = token
-        if self.mac:
-            safe = token.replace("\\", "\\\\").replace('"', '\\"')
-            subprocess.run(["security", "-i"], text=True, capture_output=True, input=(
-                f'add-generic-password -U -s {KEYCHAIN[0]} -a {KEYCHAIN[1]} -w "{safe}"\n'))
+        if self.kind:
+            getattr(self, "_save_" + self.kind)(token)
 
     def delete(self):
         self.mem = None
-        if self.mac:
-            subprocess.run(["security", "delete-generic-password", "-s", KEYCHAIN[0],
-                            "-a", KEYCHAIN[1]], capture_output=True)
+        if self.kind:
+            getattr(self, "_del_" + self.kind)()
+
+    # -- macOS
+    def _load_mac(self):
+        r = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN[0],
+                            "-a", KEYCHAIN[1], "-w"], capture_output=True, text=True)
+        return r.stdout if r.returncode == 0 else None
+
+    def _save_mac(self, token):
+        safe = token.replace("\\", "\\\\").replace('"', '\\"')
+        subprocess.run(["security", "-i"], text=True, capture_output=True, input=(
+            f'add-generic-password -U -s {KEYCHAIN[0]} -a {KEYCHAIN[1]} -w "{safe}"\n'))
+
+    def _del_mac(self):
+        subprocess.run(["security", "delete-generic-password", "-s", KEYCHAIN[0],
+                        "-a", KEYCHAIN[1]], capture_output=True)
+
+    # -- Linux (libsecret)
+    def _load_linux(self):
+        r = subprocess.run(["secret-tool", "lookup", "service", KEYCHAIN[0], "account", KEYCHAIN[1]],
+                           capture_output=True, text=True)
+        return r.stdout if r.returncode == 0 else None
+
+    def _save_linux(self, token):
+        subprocess.run(["secret-tool", "store", "--label=Mediastream API token", "service",
+                        KEYCHAIN[0], "account", KEYCHAIN[1]], input=token, text=True, capture_output=True)
+
+    def _del_linux(self):
+        subprocess.run(["secret-tool", "clear", "service", KEYCHAIN[0], "account", KEYCHAIN[1]],
+                       capture_output=True)
+
+    # -- Windows Credential Manager (generic credential, per user)
+    # ponytail: written from the Win32 docs, not yet run on Windows; test before shipping.
+    @staticmethod
+    def _wincred():
+        import ctypes
+        from ctypes import wintypes
+
+        class CRED(ctypes.Structure):
+            _fields_ = [("Flags", wintypes.DWORD), ("Type", wintypes.DWORD),
+                        ("TargetName", wintypes.LPWSTR), ("Comment", wintypes.LPWSTR),
+                        ("LastWritten", wintypes.FILETIME), ("BlobSize", wintypes.DWORD),
+                        ("Blob", ctypes.POINTER(ctypes.c_ubyte)), ("Persist", wintypes.DWORD),
+                        ("AttrCount", wintypes.DWORD), ("Attrs", ctypes.c_void_p),
+                        ("Alias", wintypes.LPWSTR), ("User", wintypes.LPWSTR)]
+        adv = ctypes.WinDLL("advapi32", use_last_error=True)
+        adv.CredReadW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD,
+                                  ctypes.POINTER(ctypes.POINTER(CRED))]
+        adv.CredWriteW.argtypes = [ctypes.POINTER(CRED), wintypes.DWORD]
+        adv.CredDeleteW.argtypes = [wintypes.LPCWSTR, wintypes.DWORD, wintypes.DWORD]
+        adv.CredFree.argtypes = [ctypes.c_void_p]
+        return ctypes, CRED, adv
+
+    TARGET = KEYCHAIN[0] + "/" + KEYCHAIN[1]
+
+    def _load_win(self):
+        ctypes, CRED, adv = self._wincred()
+        p = ctypes.POINTER(CRED)()
+        if not adv.CredReadW(self.TARGET, 1, 0, ctypes.byref(p)):
+            return None
+        try:
+            return ctypes.string_at(p.contents.Blob, p.contents.BlobSize).decode("utf-16-le")
+        finally:
+            adv.CredFree(p)
+
+    def _save_win(self, token):
+        ctypes, CRED, adv = self._wincred()
+        blob = token.encode("utf-16-le")
+        buf = (ctypes.c_ubyte * len(blob)).from_buffer_copy(blob)
+        c = CRED(Type=1, TargetName=self.TARGET, BlobSize=len(blob), Persist=2, User="mediastream",
+                 Blob=ctypes.cast(buf, ctypes.POINTER(ctypes.c_ubyte)))
+        adv.CredWriteW(ctypes.byref(c), 0)
+
+    def _del_win(self):
+        _, _, adv = self._wincred()
+        adv.CredDeleteW(self.TARGET, 1, 0)
 
 
 class Jobs:
@@ -160,7 +237,7 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
     def call(action, params):
         params = params or {}
         if action == "token_status":
-            return {"saved": bool(kc.load())}
+            return {"saved": bool(kc.load()), "persistent": getattr(kc, "persistent", True)}
         if action == "token_save":
             t = (params.get("token") or "").strip()
             if not t:
@@ -173,7 +250,8 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
             kc.delete()
             return {"saved": False}
         if action == "prefs_get":
-            return _prefs_get()
+            from .client import default_media_dir
+            return {"export_dir": default_media_dir()} | _prefs_get()
         if action == "prefs_set":
             return _prefs_set(params)
         if action == "presets":
@@ -259,7 +337,11 @@ def main():
     from .resolve import ScriptAdapter
     resolve = ScriptAdapter()
     key = secrets.token_urlsafe(24)
-    srv = make_server(make_panel_call(make_mediastream(resolve), resolve.presets), key, a.port)
+    call = make_panel_call(make_mediastream(resolve), resolve.presets)
+    try:
+        srv = make_server(call, key, a.port)
+    except OSError:  # port busy (another panel, other software): let the OS pick one
+        srv = make_server(call, key, 0)
     url = f"http://127.0.0.1:{srv.server_address[1]}/"
     print(f"Mediastream panel: {url}  (Ctrl+C to stop)", flush=True)
     if not a.no_open:

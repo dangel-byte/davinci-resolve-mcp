@@ -4,11 +4,11 @@ make_mediastream(resolve) binds it to a Resolve adapter (see resolve.py); the MC
 standalone panel both use it, so there is one implementation.
 """
 import os
-import tempfile
 
 from . import client as ms
 from .resolve import ResolveError
 
+RENDER_MIN_FREE = 2 * 1024 ** 3  # ponytail: flat 2 GB floor; the render size is unknown up front
 ACTIONS = ["search", "download", "upload", "subtitle", "embed", "export_upload"]
 
 
@@ -39,7 +39,7 @@ def make_mediastream(resolve):
             if action == "download":
                 if not p.get("media_id"):
                     return _err("download requires media_id")
-                dest = p.get("dest_dir") or os.path.join(tempfile.gettempdir(), "mediastream")
+                dest = p.get("dest_dir") or ms.default_media_dir()
                 path = ms.download(p["media_id"], dest, token=tok)
                 if not _bool(p.get("import")):
                     return _ok(path=path, imported=None)
@@ -55,6 +55,7 @@ def make_mediastream(resolve):
             if action == "export_upload":
                 if not p.get("target_dir"):
                     return _err("export_upload requires target_dir")
+                ms.ensure_space(p["target_dir"], RENDER_MIN_FREE, "render")
                 job = {k: p[k] for k in ("target_dir", "from_preset", "format", "codec",
                                          "settings", "custom_name") if p.get(k)}
                 out = resolve.render_current(job, float(p.get("timeout", 3600)))

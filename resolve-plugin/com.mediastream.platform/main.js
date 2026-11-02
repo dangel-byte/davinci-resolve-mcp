@@ -19,7 +19,8 @@ function start() {
   let repo;
   try { repo = JSON.parse(fs.readFileSync(path.join(__dirname, 'config.json'), 'utf8')).repo; }
   catch (e) { return fail('config.json missing: run scripts/install_mediastream_plugin.py'); }
-  const py = path.join(repo, 'venv', 'bin', 'python');
+  const py = process.platform === 'win32' ? path.join(repo, 'venv', 'Scripts', 'python.exe')
+                                         : path.join(repo, 'venv', 'bin', 'python');
   if (!fs.existsSync(py)) return fail('Python not found: ' + py);
 
   child = spawn(py, ['-m', 'mediastream_resolve.panel', '--no-open', '--port', '0'], { cwd: repo });
