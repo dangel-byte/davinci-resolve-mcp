@@ -52,3 +52,7 @@ Probar a mano (no automatizar con teclas, cuelga Resolve):
 
 - Nunca incluir `WorkflowIntegration.node` de Blackmagic en el repo. El instalador lo copia desde la instalación de Resolve del usuario.
 - El token de API no se guarda en archivos ni en el log.
+
+## Paridad con el plugin de Premiere
+
+La copia local del plugin de Premiere (`~/Projects/premiere-uxp`, rama `parity/resolve-hardening`, remoto `upstream` solo lectura) se igualó con esta versión: reintentos de chunks, emparejado exacto del media subido, carpeta vigilada estable, `.srt` activado y validación de token. Esta versión incorporó a cambio la opción **publicar al subir** (`publish`) y la marca de vídeo vertical. Detalle en `PARIDAD.md` de ese repo. No portado a Resolve: reemplazar media y abrir en Platform.

@@ -242,8 +242,11 @@ def embed_url(media: dict) -> Optional[str]:
 
 
 def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
-           poll_seconds: int = 60) -> dict:
-    """Resumable chunk upload. Returns {media_id, media} (media is None if not visible yet)."""
+           poll_seconds: int = 60, publish: bool = False) -> dict:
+    """Resumable chunk upload. Returns {media_id, media} (media is None if not visible yet).
+
+    publish=True also sets is_published (the Premiere panel's "publish" switch); the default
+    leaves the media unpublished, so it can be neither searched nor downloaded until published."""
     t = token_from(token)
     path = check_path(path, VIDEO_EXTS)
     name = os.path.basename(path)
@@ -282,8 +285,11 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
         if not media:
             time.sleep(4)
     mid = media_id(media) if media else ""
-    if media and title and title != media.get("title"):
-        body = urllib.parse.urlencode({"token": t, "title": title}).encode()
+    if media and ((title and title != media.get("title")) or publish):
+        fields = {"token": t, "is_published": "true" if publish else "false"}
+        if title:
+            fields["title"] = title
+        body = urllib.parse.urlencode(fields).encode()
         _json(_request("POST", f"{BASE}/api/media/{urllib.parse.quote(mid)}", None, body,
                        {"Content-Type": "application/x-www-form-urlencoded"}))
     return {"media_id": mid, "media": media, "title": title or name}
@@ -329,8 +335,8 @@ class Watcher:
     """
 
     def __init__(self, folder: str, token: Optional[str] = None, upload_fn=None, subtitle_fn=None,
-                 auto: bool = False):
-        self.folder, self.token, self.auto = folder, token, auto
+                 auto: bool = False, publish: bool = False):
+        self.folder, self.token, self.auto, self.publish = folder, token, auto, publish
         self.pending: List[str] = []
         self.upload_fn, self.subtitle_fn = upload_fn or upload, subtitle_fn or upload_subtitle
         self.seen = {fp for fp in self._files()}
@@ -368,7 +374,8 @@ class Watcher:
         p = os.path.join(self.folder, n)
         entry = {"file": n}
         try:
-            entry["media_id"] = self.upload_fn(p, token=self.token)["media_id"]
+            kw = {"publish": True} if self.publish else {}
+            entry["media_id"] = self.upload_fn(p, token=self.token, **kw)["media_id"]
             srt = next((s for s in (p + ".srt", os.path.splitext(p)[0] + ".srt")
                         if os.path.isfile(s)), None)
             if srt and entry["media_id"]:

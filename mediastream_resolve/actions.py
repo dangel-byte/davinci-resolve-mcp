@@ -33,7 +33,7 @@ def make_mediastream(resolve):
                 items = ms.search(p.get("query", ""), int(p.get("limit", 20)), int(p.get("skip", 0)), tok)
                 return _ok(items=[{"id": ms.media_id(m), "title": m.get("title"),
                                    "embed": ms.embed_url(m), "thumb": ms.thumbnail_url(m),
-                                   "duration": m.get("duration")} for m in items])
+                                   "duration": m.get("duration"), "vertical": bool(m.get("is_vertical"))} for m in items])
             if action == "embed":
                 return _ok(embed=ms.embed_url(ms.get(p["media_id"], token=tok) or {}))
             if action == "download":
@@ -50,7 +50,7 @@ def make_mediastream(resolve):
             if action == "upload":
                 if not p.get("path"):
                     return _err("upload requires path")
-                r = ms.upload(p["path"], p.get("title"), tok)
+                r = ms.upload(p["path"], p.get("title"), tok, publish=_bool(p.get("publish"), False))
                 return _ok(media_id=r["media_id"], found=bool(r["media"]))
             if action == "export_upload":
                 if not p.get("target_dir"):
@@ -59,7 +59,7 @@ def make_mediastream(resolve):
                 job = {k: p[k] for k in ("target_dir", "from_preset", "format", "codec",
                                          "settings", "custom_name") if p.get(k)}
                 out = resolve.render_current(job, float(p.get("timeout", 3600)))
-                r = ms.upload(out, p.get("title"), tok)
+                r = ms.upload(out, p.get("title"), tok, publish=_bool(p.get("publish"), False))
                 res = {"output_path": out, "media_id": r["media_id"], "found": bool(r["media"])}
                 if p.get("srt_path") and r["media_id"]:
                     res["subtitle"] = ms.upload_subtitle(r["media_id"], p["srt_path"], token=tok)

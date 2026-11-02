@@ -31994,11 +31994,12 @@ def mediastream(action: str, params: Optional[Dict[str, Any]] = None) -> Dict[st
       search(query?, limit?, skip?) -> {items: [{id, title, embed}]}
       download(media_id, dest_dir?, import?) -> {path, imported}
         — fetches the original rendition; import (default true) adds it to the Media Pool.
-      upload(path, title?) -> {media_id, found}
-        — resumable chunk upload of an existing file (e.g. a finished render).
+      upload(path, title?, publish?) -> {media_id, found}
+        — resumable chunk upload of an existing file (e.g. a finished render). Media stay
+      unpublished unless publish=true (unpublished media cannot be searched or downloaded).
       subtitle(media_id, srt_path, language?, language_name?) -> {result}
       embed(media_id) -> {embed}
-      export_upload(target_dir, from_preset?|format?+codec?, settings?, title?, timeout?, srt_path?)
+      export_upload(target_dir, from_preset?|format?+codec?, settings?, title?, publish?, timeout?, srt_path?)
         -> {output_path, media_id}
         — renders the CURRENT timeline (like the Premiere panel's "Exportar video a
           Platform"), waits for the job, verifies the file, uploads it, optional .srt.

@@ -269,3 +269,36 @@ class QaRegressions(unittest.TestCase):
         def dns(*a, **k): raise ms.urllib.error.URLError("dns")
         with mock.patch.object(ms, "search", dns):
             self.assertIn("error", m("search", {}))
+
+
+class PublishFlag(unittest.TestCase):
+    def test_watcher_passes_publish_only_when_asked(self):
+        import os, tempfile
+        for pub, expect in ((False, {}), (True, {"publish": True})):
+            d = tempfile.mkdtemp(); seen = []
+            w = ms.Watcher(d, "t", lambda p, token=None, **kw: seen.append(kw) or {"media_id": "m"},
+                           lambda *a, **k: None, auto=True, publish=pub)
+            open(os.path.join(d, "a.mp4"), "wb").write(b"abc")
+            w.scan(); w.scan()
+            self.assertEqual(seen, [expect])
+
+    def test_upload_sets_is_published_only_with_publish(self):
+        import os, tempfile
+        f = os.path.join(tempfile.mkdtemp(), "reel.mp4"); open(f, "wb").write(b"abc")
+        for pub, want in ((False, "false"), (True, "true")):
+            posts = []
+            def fake(method, url, token=None, data=None, headers=None, timeout=60):
+                if method == "POST" and "/api/media/m1" in url:
+                    posts.append(data.decode())
+                class R:
+                    status = 200
+                    def read(self_): return b"{}"
+                return R()
+            media = {"_id": "m1", "title": "reel", "date_created": "9999"}
+            replies = [{"status": "OK", "data": {"server": "https://s/u"}},
+                       {"status": "OK", "data": [media]}, {"status": "OK"}]
+            with mock.patch.object(ms, "_request", fake), \
+                 mock.patch.object(ms, "_json", side_effect=replies), \
+                 mock.patch.object(ms, "_with_retry", lambda fn, tries=4: True):  # chunk already on server
+                ms.upload(f, "Reel Title", "t", poll_seconds=1, publish=pub)
+            self.assertTrue(any(f"is_published={want}" in p for p in posts), posts)

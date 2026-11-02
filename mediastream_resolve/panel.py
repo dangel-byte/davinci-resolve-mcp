@@ -183,13 +183,13 @@ class WatchState:
     def __init__(self, interval=5):
         self.interval, self.w, self.stop = interval, None, None
 
-    def start(self, folder, token, auto=False):
+    def start(self, folder, token, auto=False, publish=False):
         from .client import Watcher, token_from
         if self.w:
             return {"success": False, "error": "already watching " + self.w.folder}
         if not os.path.isdir(folder or ""):
             return {"success": False, "error": "folder not found"}
-        self.w, self.stop = Watcher(folder, token_from(token), auto=bool(auto)), threading.Event()
+        self.w, self.stop = Watcher(folder, token_from(token), auto=bool(auto), publish=bool(publish)), threading.Event()
 
         def loop(w, stop):
             while not stop.wait(self.interval):
@@ -298,7 +298,7 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
         if action == "presets":
             return {"presets": list_presets()}
         if action == "watch_start":
-            return watch.start(params.get("folder"), kc.load(), params.get("auto"))
+            return watch.start(params.get("folder"), kc.load(), params.get("auto"), params.get("publish"))
         if action in ("watch_approve", "watch_dismiss"):
             if not watch.w:
                 return {"error": "not watching"}
