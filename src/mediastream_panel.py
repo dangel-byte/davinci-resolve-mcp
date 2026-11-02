@@ -139,7 +139,7 @@ def main():
         return mediastream(action, params)
     srv = make_server(call, key, a.port)
     url = f"http://127.0.0.1:{srv.server_address[1]}/"
-    print(f"Mediastream panel: {url}  (Ctrl+C to stop)")
+    print(f"Mediastream panel: {url}  (Ctrl+C to stop)", flush=True)
     if not a.no_open:
         webbrowser.open(url)
     try:

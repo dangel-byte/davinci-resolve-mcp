@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BlackmagicDesign>
+    <Plugin>
+        <Id>com.mediastream.platform</Id>
+        <Name>Mediastream Platform</Name>
+        <Version>1.0</Version>
+        <Description>Search, import, export and upload to Mediastream Platform</Description>
+        <FilePath>main.js</FilePath>
+    </Plugin>
+</BlackmagicDesign>
