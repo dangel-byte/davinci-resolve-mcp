@@ -128,23 +128,34 @@ def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] 
     """Download the original (else first) rendition into dest_dir; returns the file path."""
     t = token_from(token)
     media = get(mid, admin=admin, token=t)
-    urls = rendition_urls(media or {})
-    if not urls:
-        raise MediastreamError(f"media {mid} has no downloadable rendition")
     at = issue_access_token(mid, admin=admin, token=t)
-    u = urllib.parse.urlsplit(urls[0])
-    q = dict(urllib.parse.parse_qsl(u.query), download="true", admin_token="true", access_token=at)
-    url = urllib.parse.urlunsplit(u._replace(query=urllib.parse.urlencode(q)))
+    q = urllib.parse.urlencode({"download": "true", "admin_token": "true", "access_token": at})
+    # The access token is issued for the media id, so /video/{media_id}.mp4 is the URL it
+    # unlocks (rendition-id URLs answer 403, measured). Renditions stay as a fallback.
+    candidates = [f"https://mdstrm.com/video/{urllib.parse.quote(mid)}.mp4?{q}"]
+    for u in rendition_urls(media or {}):
+        sp = urllib.parse.urlsplit(u)
+        candidates.append(urllib.parse.urlunsplit(sp._replace(
+            query=urllib.parse.urlencode(dict(urllib.parse.parse_qsl(sp.query),
+                                              download="true", admin_token="true", access_token=at)))))
     title = re.sub(r"[^\w.\- ]+", "_", str((media or {}).get("title") or mid)).strip()[:80] or mid
     os.makedirs(dest_dir, exist_ok=True)
     path = os.path.join(dest_dir, f"{title}__{mid}.mp4")
     part = path + ".part"
-    with _request("GET", url, t, timeout=300) as res, open(part, "wb") as f:
-        while True:
-            b = res.read(1 << 20)
-            if not b:
-                break
-            f.write(b)
+    last = None
+    for url in candidates:
+        try:
+            with _request("GET", url, t, timeout=300) as res, open(part, "wb") as f:
+                while True:
+                    b = res.read(1 << 20)
+                    if not b:
+                        break
+                    f.write(b)
+            break
+        except MediastreamError as e:
+            last = e
+    else:
+        raise last
     os.replace(part, path)
     return path
 
