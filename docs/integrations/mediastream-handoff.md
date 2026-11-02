@@ -38,9 +38,15 @@ Probar a mano (no automatizar con teclas, cuelga Resolve):
 - Selector de carpetas nativo, drag-and-drop, progreso en %, miniaturas reales.
 - Resolve Free 21.1 no lista scripts Python: ahí solo sirve el panel web.
 
-## Pasos de producto no hechos
+## Versión y Bridge (hechos)
 
-Orden recomendado: (3) archivo VERSION/SemVer y chequeo de actualización diario, nunca silencioso y con opción de fijar versión; (4) una app única "Mediastream Bridge" con PyInstaller y bandeja, con modo Free = renderizar a carpeta + watch folder; (5) instaladores firmados y CI de releases.
+- Versión en `mediastream_resolve/__init__.py` (`__version__`, SemVer). Chequeo de actualización: **apagado hasta que IT lo configure**. Poner `update_url` (https) en `prefs.json` o la variable `MEDIASTREAM_UPDATE_URL`, apuntando a un JSON `{"version": "1.2.3", "url": "https://..."}`. Se consulta como máximo una vez al día, solo avisa (banner con enlace) y nunca instala. Para fijar versión: no configurar la URL, o `MEDIASTREAM_NO_UPDATE_CHECK=1`.
+- App de bandeja "Mediastream Bridge" (`mediastream_resolve/bridge.py`). Compilar en el SO destino: `python3 -m venv build-venv && build-venv/bin/pip install -r packaging/requirements-build.txt && build-venv/bin/python packaging/build_bridge.py`. Probado en macOS arm64 (36 MB, arranca y sirve el panel). **Windows/Linux sin probar.** El resultado sale **sin firmar**.
+- Modo Free: el Bridge no necesita Resolve Studio; se usa exportar a carpeta y el watch folder del panel.
+
+## Pendiente de IT (producto)
+
+(5) Instaladores firmados y notarizados (`.pkg`/`.exe`) y CI de releases. Publicar el manifiesto de versión. Probar el Bridge en Windows. Decidir si el Bridge arranca con el sistema.
 
 ## Notas
 
