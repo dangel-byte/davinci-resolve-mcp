@@ -1,0 +1,16 @@
+#!/bin/sh
+# Runs as root after the payload is copied. MS_TEST_ROOT lets tests run it against a temp tree.
+R="${MS_TEST_ROOT:-}"
+RES_REL="/Library/Application Support/Blackmagic Design/DaVinci Resolve"
+PLUG_REL="$RES_REL/Workflow Integration Plugins/com.mediastream.platform"
+PLUG="$R$PLUG_REL"
+NODE="$R$RES_REL/Developer/Workflow Integrations/Examples/SamplePlugin/WorkflowIntegration.node"
+
+# Unsigned engine: drop the download quarantine so macOS does not block it when Resolve starts it.
+xattr -dr com.apple.quarantine "$PLUG" 2>/dev/null
+
+# Blackmagic's native module is not redistributable: copy it from the user's own Resolve install.
+[ -f "$NODE" ] && cp -f "$NODE" "$PLUG/WorkflowIntegration.node"
+printf '{"engine": "%s/engine/mediastream-engine"}' "$PLUG_REL" > "$PLUG/config.json"
+chmod -R a+rX "$PLUG"
+exit 0

@@ -55,4 +55,8 @@ Probar a mano (no automatizar con teclas, cuelga Resolve):
 
 ## Paridad con el plugin de Premiere
 
-La copia local del plugin de Premiere (`~/Projects/premiere-uxp`, rama `parity/resolve-hardening`, remoto `upstream` solo lectura) se igualó con esta versión: reintentos de chunks, emparejado exacto del media subido, carpeta vigilada estable, `.srt` activado y validación de token. Esta versión incorporó a cambio la opción **publicar al subir** (`publish`) y la marca de vídeo vertical. Detalle en `PARIDAD.md` de ese repo. No portado a Resolve: reemplazar media y abrir en Platform.
+La copia local del plugin de Premiere (`~/Projects/premiere-uxp`, rama `parity/resolve-hardening`, remoto `upstream` solo lectura) se igualó con esta versión: reintentos de chunks, emparejado exacto del media subido, carpeta vigilada estable, `.srt` activado y validación de token. Esta versión incorporó a cambio la opción **publicar al subir** (`publish`) y la marca de vídeo vertical. Detalle en `PARIDAD.md` de ese repo. No portado a Resolve: el botón «SRT» de Premiere (importa solo el `.srt` de la transcripción IA de Platform). Premiere recibió a cambio el botón «Embed». Nota: el README de Premiere menciona «reemplazar media» y «abrir en Platform», pero el código del panel no los tiene.
+
+## Decisión: solo plugins dentro de cada programa (2026-11-02)
+
+Nada abre un navegador y no hay app aparte ni icono de barra de menú. En Resolve, el plugin de Workflow Integrations (solo Studio) muestra el panel en su propia ventana; el motor Python va congelado dentro de la carpeta del plugin (`packaging/build_engine.py`, `packaging/build_pkg_macos.sh`). Se eliminó el «Mediastream Bridge» (bandeja + navegador) y el soporte de Resolve Free. Kit de instalación con guías PDF: `docs/tutorial/` en cada repo (fuentes HTML, `build_pdf.py`, `make_screens.py`).

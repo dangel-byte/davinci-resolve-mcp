@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<title>Mediastream para DaVinci Resolve — Guía</title>
+<meta name="doc-kind" content="Guía de instalación y uso"><meta name="doc-version" content="Mediastream para DaVinci Resolve · v0.1.0 · noviembre 2026">
+<meta name="doc-title" content="Mediastream para DaVinci Resolve — Guía de instalación y uso">
+<style>{{CSS}}</style></head><body>
+
+<!-- 1 PORTADA -->
+<section class="page cover"><div class="in">
+  {{LOGO}}
+  <h1>Mediastream<br>para <span>DaVinci Resolve</span></h1>
+  <p class="sub">Busca en tu catálogo de Platform, importa a tu proyecto y sube tus renders, sin salir del flujo de edición.</p>
+  <div class="meta"><span>Guía de instalación y uso · versión 0.1.0</span><span>Noviembre 2026</span></div>
+</div></section>
+
+<!-- 2 QUÉ HACE -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Empieza aquí</p><h1>Qué hace y cómo funciona</h1>
+  <p class="lead">El plugin de Mediastream conecta DaVinci Resolve con tu cuenta de <b>Mediastream Platform</b>. Todo el trabajo ocurre en una ventana dentro de Resolve: no necesitas salir del programa ni abrir la web de Platform para el día a día.</p>
+  <div class="flow">
+    <div class="box"><b>Mediastream Platform</b>Tu catálogo, tus videos y tus subtítulos.</div><div class="arrow">⇄</div>
+    <div class="box"><b>Plugin Mediastream</b>Ventana dentro de Resolve con 2 pestañas: <i>Media</i> y <i>Subir</i>.</div><div class="arrow">⇄</div>
+    <div class="box"><b>DaVinci Resolve</b>Media Pool, timeline y Deliver.</div>
+  </div>
+  <table>
+    <tr><th style="width:34%">Quiero…</th><th>Dónde lo hago</th></tr>
+    <tr><td><b>Traer un video de Platform</b> a mi proyecto</td><td>Pestaña <b>Media</b> → buscar → <b>Importar</b> (página 6)</td></tr>
+    <tr><td><b>Subir mi timeline</b> terminado</td><td>Pestaña <b>Subir</b> → <b>Exportar y subir</b> (página 7)</td></tr>
+    <tr><td><b>Subir un archivo</b> que ya tengo</td><td>Pestaña <b>Subir</b> → <b>Subir un archivo</b> (página 8)</td></tr>
+    <tr><td>Que <b>todo lo que exporte a una carpeta</b> se suba solo</td><td><b>Configuración</b> → <b>Carpeta vigilada</b> (página 9)</td></tr>
+    <tr><td>Subir con <b>subtítulos</b></td><td>Campo <b>Subtítulos .srt</b> o un <code>.srt</code> junto al video (página 10)</td></tr>
+  </table>
+  <h3>Dónde lo encuentras</h3>
+  <div class="card"><p class="eyebrow">Plugin de DaVinci Resolve Studio</p><p style="margin:0">Menú <i>Workspace → Workflow Integrations → Mediastream Platform</i>. Se abre como una ventana de Resolve; puedes dejarla abierta mientras editas.</p></div>
+  <div class="note"><b>Tu token es tuyo</b>El API token se guarda en el llavero de macOS. El panel nunca lo vuelve a mostrar y no lo escribe en ningún archivo.</div>
+{{FTR}}</section>
+
+<!-- 3 REQUISITOS -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Antes de instalar</p><h1>Requisitos</h1>
+  <table>
+    <tr><th style="width:30%">Qué necesitas</th><th>Detalle</th></tr>
+    <tr><td>Mac con <b>Apple Silicon</b></td><td>El instalador incluido es para chips M1 o superiores. Para un Mac Intel hay que generar otro instalador (pídelo a IT).</td></tr>
+    <tr><td>DaVinci Resolve <b>Studio 21</b></td><td>Los plugins (<i>Workflow Integrations</i>) existen solo en la edición <b>Studio</b>. Resolve Free no es compatible.</td></tr>
+    <tr><td><b>API token</b> de Platform</td><td>Lo gestiona tu administrador en Mediastream Platform (sección de cuenta / API). Pide uno con permiso de <b>lectura</b> y, si vas a subir, de <b>subida</b> y <b>publicación</b>.</td></tr>
+    <tr><td>Internet</td><td>Acceso a <code>platform.mediastre.am</code> y <code>mdstrm.com</code>. En redes corporativas puede requerir una excepción.</td></tr>
+    <tr><td>Espacio en disco</td><td>Descargas y renders van a <code>~/Movies/Mediastream</code> (puedes cambiarlo). Antes de exportar el panel pide al menos 2 GB libres.</td></tr>
+  </table>
+  <div class="note"><b>Solo en Studio</b>El plugin necesita que Resolve esté abierto con un <b>proyecto</b> cargado: lo usa para importar, renderizar y leer tus presets de Deliver.</div>
+  <div class="note"><b>Una sola vez</b>En Resolve: <i>Preferences → System → General → External scripting using → Local</i>. Sin esto, el plugin no puede hablar con Resolve.</div>
+{{FTR}}</section>
+
+<!-- 4 INSTALACION -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Paso a paso</p><h1>Instalación en macOS</h1>
+  <ol class="steps">
+    <li><b>Cierra DaVinci Resolve Studio.</b> Recomendado si ya lo tienes abierto.</li>
+    <li><b>Abre el instalador</b> <code>Mediastream-Resolve-0.1.0.pkg</code> con clic derecho → <b>Abrir</b>. El instalador aún no está firmado por Apple: macOS pide confirmación una sola vez. Si solo ves «No se puede abrir», ve a <i>Ajustes del Sistema → Privacidad y seguridad</i> y pulsa <b>Abrir de todos modos</b>.</li>
+    <li><b>Sigue el asistente</b> (Continuar → Instalar). Te pedirá la contraseña de tu Mac.</li>
+    <li><b>Abre Resolve Studio</b> y entra a <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
+  </ol>
+  <div class="cols">
+    <div>
+      <h3>Qué se instala</h3>
+      <table>
+        <tr><th>Qué</th><th>Dónde</th></tr>
+        <tr><td>Plugin de Resolve Studio</td><td><code>/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.mediastream.platform</code></td></tr>
+      </table>
+      <p style="font-size:8.5pt;color:rgba(26,26,26,.65)">El instalador copia el módulo <code>WorkflowIntegration.node</code> desde tu propia instalación de Resolve (Blackmagic no permite redistribuirlo). Si Resolve no está instalado todavía, instala Resolve y vuelve a correr el instalador.</p>
+    </div>
+    <div>
+      <h3>¿Cómo sé que quedó bien?</h3>
+      <ul>
+        <li><i>Mediastream Platform</i> aparece en <i>Workspace → Workflow Integrations</i>.</li>
+        <li>Al abrirlo, muestra <b>«Conecta tu cuenta»</b> (la primera vez).</li>
+      </ul>
+      <div class="tip"><b>Actualizar</b>Para pasar a una versión nueva, corre el instalador nuevo encima: reemplaza la anterior y conserva tu token y tus ajustes.</div>
+    </div>
+  </div>
+  <div class="warn"><b>Importante</b>Esta versión del instalador es para <b>macOS</b>. Para Windows todavía no hay instalador: pídelo a IT de Mediastream.</div>
+{{FTR}}</section>
+
+<!-- 5 PRIMER USO -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Primer uso</p><h1>Conecta tu cuenta</h1>
+  <div class="cols wide-r">
+    <div>
+      <ol class="steps">
+        <li>Abre el plugin: <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
+        <li>Pega tu <b>API token</b> en el campo y pulsa <b>Guardar y continuar</b>.</li>
+        <li>Listo: se abre la pestaña <b>Media</b>.</li>
+      </ol>
+      <p>El token se guarda en el <b>llavero de macOS</b>. Solo lo pegas una vez por Mac.</p>
+      <div class="note"><b>Sin internet</b>Si no hay conexión al guardar, el token se guarda igual y se comprueba cuando vuelvas a conectarte.</div>
+      <h3>Si Platform rechaza el token</h3>
+      <p>Verás <b>«Platform rechazó el token. Revisa que esté completo y tenga permisos.»</b> Pega el token completo (sin espacios al final) o pide a tu administrador uno con los permisos que necesitas.</p>
+    </div>
+    <div>
+      <img class="shot" src="img/resolve-onboarding.png" alt="" style="margin-bottom:5mm"><p class="cap">Primera vez: pega tu API token.</p>
+      <img class="shot crop" src="img/resolve-onboarding-error.png" alt="" style="height:44mm"><p class="cap">Si el token no sirve, el panel te lo dice.</p>
+    </div>
+  </div>
+{{FTR}}</section>
+
+<!-- 6 MEDIA -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Pestaña Media</p><h1>Buscar e importar</h1>
+  <div class="cols wide-r">
+    <div>
+      <ol class="steps">
+        <li>Escribe lo que buscas (título, palabra clave) y pulsa <b>Buscar</b> o <span class="kbd">Enter</span>. Con el campo vacío ves tu catálogo.</li>
+        <li>Cada resultado muestra miniatura, título, duración e id. El símbolo <b>▯</b> marca los videos <b>verticales</b>.</li>
+        <li>Pulsa <b>Importar</b>: el panel descarga el <b>original</b> a <code>~/Movies/Mediastream</code> y lo importa al <b>Media Pool</b>. El botón pasa a <b>Importado</b>.</li>
+        <li>El botón de copiar al lado de Importar copia el <b>enlace embed</b>.</li>
+        <li>Usa las flechas de abajo para pasar de página (8 resultados por página).</li>
+      </ol>
+      <div class="warn"><b>Solo ves lo publicado</b>La búsqueda y la descarga solo funcionan con media <b>publicado</b> en Platform. Un video recién subido sin publicar no aparece aquí hasta que lo publiques (o lo subas con <b>Publicar al subir</b>).</div>
+      <div class="tip"><b>El archivo se llama así</b><code>Título__id.mp4</code>, en <code>~/Movies/Mediastream</code>.</div>
+    </div>
+    <div><img class="shot" src="img/resolve-media-import.png" alt=""><p class="cap">Resultados de búsqueda. El primero ya está importado.</p></div>
+  </div>
+{{FTR}}</section>
+
+<!-- 7 TIMELINE A PLATFORM -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Pestaña Subir</p><h1>Subir tu timeline a Platform</h1>
+  <div class="cols wide-r">
+    <div>
+      <ol class="steps">
+        <li>En Resolve, <b>abre el timeline</b> terminado.</li>
+        <li>En el panel, pestaña <b>Subir</b>. Completa:
+          <ul>
+            <li><b>Título en Platform</b> (opcional; si lo dejas vacío usa el nombre del archivo).</li>
+            <li><b>Carpeta de exportación</b>: donde se guarda el render.</li>
+            <li><b>Preset (Deliver)</b>: la lista sale de tus presets de Resolve.</li>
+            <li><b>Subtítulos .srt</b> (opcional): ruta del archivo.</li>
+            <li><b>Publicar al subir</b>: márcala para que el video quede publicado.</li>
+          </ul></li>
+        <li>Pulsa <b>Exportar y subir</b>. Sigue el avance en la <b>Cola</b>.</li>
+      </ol>
+      <h3>Qué hace por dentro</h3>
+      <p style="font-size:9pt">Renderiza el timeline con tu preset, <b>verifica</b> que el archivo no esté vacío, lo sube por partes (reintenta solo si falla la red), aplica título y publicación y, si pusiste un .srt, lo adjunta.</p>
+      <div class="warn"><b>Ojo con la duración</b>Se renderiza el timeline <b>completo</b>. Un timeline de una hora genera un archivo de varios GB. Revisa preset y espacio antes de pulsar.</div>
+    </div>
+    <div><img class="shot" src="img/resolve-upload.png" alt="" style="aspect-ratio:1640/2200;object-fit:cover;object-position:top"><p class="cap">Pestaña Subir con los campos completos.</p></div>
+  </div>
+{{FTR}}</section>
+
+<!-- 8 ARCHIVO + COLA -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Pestaña Subir</p><h1>Subir un archivo y seguir la cola</h1>
+  <div class="cols">
+    <div>
+      <h2>Subir un archivo</h2>
+      <ol class="steps">
+        <li>Copia la ruta del archivo: en Finder, clic derecho sobre el video, mantén <span class="kbd">⌥ Opción</span> y elige <b>Copiar … como nombre de ruta</b>.</li>
+        <li>Pégala en <b>Subir un archivo</b>, marca <b>Publicar al subir</b> si quieres, y pulsa <b>Subir</b>.</li>
+      </ol>
+      <p>Formatos: <code>mp4, mov, mxf, m4v, webm, mkv, avi</code>. Por seguridad no se suben archivos ocultos ni de carpetas ocultas.</p>
+      <h2>La cola</h2>
+      <table>
+        <tr><th>Estado</th><th>Significa</th></tr>
+        <tr><td><span class="pill" style="background:rgba(165,114,235,.15);color:#6b3fa0;border:.75pt solid var(--violet)">En curso</span></td><td>Renderizando o subiendo. El número en la pestaña <b>Subir</b> cuenta los trabajos activos.</td></tr>
+        <tr><td><span class="pill">Listo</span></td><td>Ya está en Platform.</td></tr>
+        <tr><td><span class="pill" style="background:var(--red);color:#fff">Error</span></td><td>Falló; debajo se explica por qué. Corrige y vuelve a lanzar.</td></tr>
+      </table>
+      <p>Solo corre <b>una exportación a la vez</b>. <b>Limpiar</b> quita de la lista los trabajos terminados.</p>
+    </div>
+    <div><img class="shot" src="img/resolve-queue.png" alt="" style="aspect-ratio:1640/2250;object-fit:cover;object-position:top"><p class="cap">Cola con un trabajo en curso, uno listo y uno con error.</p></div>
+  </div>
+{{FTR}}</section>
+
+<!-- 9 CARPETA VIGILADA -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Configuración</p><h1>Carpeta vigilada</h1>
+  <p class="lead">Elige una carpeta de entrega. Todo video <b>nuevo</b> que aparezca en ella se prepara para subir a Platform. Es cómoda para entregar: exportas desde Deliver a esa carpeta y decides qué subir.</p>
+  <div class="cols wide-l">
+    <div>
+      <ol class="steps">
+        <li>Abre <b>Configuración</b> (arriba a la derecha, o <span class="kbd">⌘ ,</span>).</li>
+        <li>En <b>Carpeta vigilada</b> escribe la ruta de la carpeta y pulsa <b>Vigilar</b>.</li>
+        <li>Exporta tus videos a esa carpeta. Los que ya estaban <b>no</b> se suben: solo los nuevos.</li>
+        <li>Abajo siempre ves el estado: <b>Vigilando: nombre-de-carpeta</b>.</li>
+        <li>En la pestaña <b>Subir</b>, bajo <b>Cola</b>, aparece cada archivo nuevo con <b>Subir</b> y <b>Descartar</b>. Tú decides.</li>
+      </ol>
+      <table>
+        <tr><th>Opción</th><th>Qué hace</th></tr>
+        <tr><td><b>Subir sin preguntar</b></td><td>Apagada por defecto. Encendida, sube cada archivo nuevo sin pedir confirmación.</td></tr>
+        <tr><td><b>Publicar al subir</b></td><td>Deja publicado lo que sube.</td></tr>
+      </table>
+      <p style="font-size:9pt">El panel espera a que el archivo <b>deje de crecer</b> antes de ofrecerlo, así no sube exportaciones a medias. Si junto al video hay un <code>.srt</code> con el mismo nombre (<code>clip.mp4.srt</code> o <code>clip.srt</code>), se adjunta solo.</p>
+      <div class="note"><b>Mantén el plugin abierto</b>La vigilancia corre mientras la ventana del plugin esté abierta. Si la cierras, vuelve a pulsar <b>Vigilar</b> al abrirla.</div>
+    </div>
+    <div><img class="shot" src="img/resolve-watch.png" alt="" style="aspect-ratio:1640/1500;object-fit:cover;object-position:bottom"><p class="cap">Archivos nuevos esperando tu decisión.</p></div>
+  </div>
+{{FTR}}</section>
+
+<!-- 10 SUBTITULOS + CONFIG + ATAJOS -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Ajustes</p><h1>Subtítulos, idioma y atajos</h1>
+  <div class="cols">
+    <div>
+      <h2>Subtítulos .srt</h2>
+      <p>Hay dos formas de subir un video con subtítulos:</p>
+      <ul>
+        <li><b>Timeline → Platform:</b> pega la ruta en <b>Subtítulos .srt</b>.</li>
+        <li><b>Carpeta vigilada:</b> deja el <code>.srt</code> al lado del video con el mismo nombre.</li>
+      </ul>
+      <p>El panel quita la marca BOM de UTF-8 (que Platform rechaza) y sube el subtítulo como <b>español</b> (<code>es</code>) cuando el video ya está en Platform.</p>
+      <div class="tip"><b>Revisa el idioma</b>Todos los .srt se suben como español. Si el subtítulo es de otro idioma, súbelo desde la web de Platform.</div>
+      <h2>Idioma del panel</h2>
+      <p>En <b>Configuración → Idioma</b> elige <b>ES</b>, <b>EN</b> o <b>PT</b>. Se recuerda para la próxima vez.</p>
+      <h2>Token</h2>
+      <p>En Configuración puedes pegar un <b>token nuevo</b> y pulsar <b>Guardar</b>, o <b>Borrar</b> (pide una segunda pulsación para confirmar: <i>¿Borrar?</i>).</p>
+    </div>
+    <div>
+      <img class="shot" src="img/resolve-config.png" alt=""><p class="cap">Configuración: idioma, token y carpeta vigilada.</p>
+      <h3>Atajos de teclado</h3>
+      <table>
+        <tr><th>Atajo</th><th>Acción</th></tr>
+        <tr><td><span class="kbd">⌘ F</span></td><td>Ir a la búsqueda</td></tr>
+        <tr><td><span class="kbd">⌘ 1</span> · <span class="kbd">⌘ 2</span></td><td>Pestañas Media · Subir</td></tr>
+        <tr><td><span class="kbd">⌘ ,</span></td><td>Abrir Configuración</td></tr>
+        <tr><td><span class="kbd">Esc</span></td><td>Cerrar Configuración</td></tr>
+      </table>
+    </div>
+  </div>
+{{FTR}}</section>
+
+<!-- 11 PROBLEMAS -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Cuando algo no sale</p><h1>Problemas frecuentes</h1>
+  <table>
+    <tr><th style="width:36%">Qué ves</th><th>Qué hacer</th></tr>
+    <tr><td>«Platform rechazó el token…»</td><td>El token está incompleto o no tiene permisos. Pega el token entero o pide uno nuevo a tu administrador.</td></tr>
+    <tr><td>«Resolve is not reachable or has no open project…»</td><td>Abre Resolve y un <b>proyecto</b>. Activa <i>Preferences → System → General → External scripting using → Local</i>.</td></tr>
+    <tr><td>«No se pudo crear el trabajo de render. ¿Hay un timeline abierto y el preset es válido?»</td><td>Abre el timeline que quieres subir y elige otro preset de la lista.</td></tr>
+    <tr><td>«El render no pasó la verificación; no se subió.»</td><td>Resolve dejó un archivo vacío o dañado. Renderiza de nuevo; si se repite, prueba otro preset.</td></tr>
+    <tr><td>«Ya hay una exportación en curso.»</td><td>Espera a que termine la actual: solo se permite una a la vez.</td></tr>
+    <tr><td>«not enough disk space…»</td><td>Libera espacio o cambia la <b>Carpeta de exportación</b>.</td></tr>
+    <tr><td>Subí un video y no lo encuentro en <b>Media</b></td><td>Está sin publicar. Publícalo en Platform o súbelo con <b>Publicar al subir</b>.</td></tr>
+    <tr><td>Importar descarga pero no aparece en el Media Pool</td><td>Comprueba que haya un proyecto abierto. El archivo queda en <code>~/Movies/Mediastream</code>: impórtalo con <i>File → Import Media</i>.</td></tr>
+    <tr><td>macOS dice que el instalador «no se puede abrir»</td><td>Clic derecho → <b>Abrir</b>, o <i>Ajustes del Sistema → Privacidad y seguridad → Abrir de todos modos</i>.</td></tr>
+    <tr><td>El plugin no aparece en <i>Workflow Integrations</i></td><td>Solo existe en <b>Studio</b>. Reinicia Resolve. Si sigue sin aparecer, vuelve a correr el instalador con Resolve ya instalado.</td></tr>
+  </table>
+  <div class="card dark">
+    <p class="eyebrow">Pedir ayuda</p>
+    <p style="margin:0 0 2mm">En <b>Configuración</b> pulsa <b>Copiar diagnóstico</b> y pega el texto en tu mensaje a soporte. Incluye versión, sistema y las últimas líneas del registro. <b>No incluye tu token.</b></p>
+    <p style="margin:0;color:rgba(255,255,255,.7);font-size:8.6pt">También puedes activar <b>Ver registro</b> (Configuración) para leer cada acción y su resultado en pantalla.</p>
+  </div>
+{{FTR}}</section>
+
+<!-- 12 ACTUALIZAR / DESINSTALAR / IT -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Mantenimiento</p><h1>Actualizar, desinstalar y datos para IT</h1>
+  <div class="cols">
+    <div>
+      <h2>Desinstalar</h2>
+      <ol class="steps">
+        <li>(Opcional) En el plugin: <b>Configuración → Borrar</b> para quitar tu token del llavero.</li>
+        <li>Abre <b>Desinstalar Mediastream.command</b> (viene junto al instalador) con clic derecho → <b>Abrir</b>.</li>
+        <li>Escribe la contraseña de tu Mac. Se quita el plugin de Resolve.</li>
+      </ol>
+      <h2>Actualizar</h2>
+      <p>Corre el instalador nuevo encima de la versión anterior. Si tu equipo de IT configuró un aviso de actualizaciones, el plugin te mostrará un aviso con la dirección de descarga; <b>nunca se instala nada solo</b>.</p>
+    </div>
+    <div>
+      <h2>Datos para IT</h2>
+      <table>
+        <tr><td style="width:36%"><b>Versión</b></td><td>0.1.0 (instalador sin firmar, arm64; el motor del plugin va dentro de su carpeta)</td></tr>
+        <tr><td><b>Token</b></td><td>Llavero de macOS, servicio <code>mediastream-resolve</code></td></tr>
+        <tr><td><b>Ajustes y log</b></td><td><code>~/.config/mediastream-resolve/</code> (<code>prefs.json</code>, <code>panel.log</code>)</td></tr>
+        <tr><td><b>Red</b></td><td>HTTPS a <code>platform.mediastre.am</code> y <code>*.mdstrm.com</code></td></tr>
+        <tr><td><b>Servicio local</b></td><td>Solo <code>127.0.0.1</code>, puerto libre, con clave por sesión. Lo muestra la ventana del plugin dentro de Resolve; no se abre navegador.</td></tr>
+        <tr><td><b>Avisos de versión</b></td><td>Apagados salvo que se defina <code>MEDIASTREAM_UPDATE_URL</code>; <code>MEDIASTREAM_NO_UPDATE_CHECK=1</code> los desactiva</td></tr>
+      </table>
+      <div class="note"><b>Pendiente para distribución amplia</b>Firma y notarización de Apple, instalador de Windows y publicación de versiones.</div>
+    </div>
+  </div>
+{{FTR}}</section>
+</body></html>

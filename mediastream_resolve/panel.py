@@ -1,7 +1,7 @@
-"""Local web panel for the Mediastream tool (works in Resolve Free and Studio; also the
-window the Workflow Integration plugin shows).
+"""Local panel for the Mediastream tool: the page the Resolve Workflow Integration plugin shows
+inside Resolve (Studio). It is only ever opened by that plugin window, never in a browser.
 
-    python3 -m mediastream_resolve.panel [--port 8765] [--no-open]
+    python3 -m mediastream_resolve.panel [--port 8765]      (the plugin shell passes --port 0)
 
 Loopback only. Every /api call needs the per-launch key embedded in the served page
 (a random website cannot POST to localhost without it). The API token lives in the macOS
@@ -22,7 +22,6 @@ import subprocess
 import sys
 import threading
 import time
-import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PAGE_FILE = pathlib.Path(__file__).with_name("panel.html")
@@ -396,12 +395,9 @@ def build(port):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8765)
-    ap.add_argument("--no-open", action="store_true")
     a = ap.parse_args()
     srv, url = build(a.port)
     print(f"Mediastream panel: {url}  (Ctrl+C to stop)", flush=True)
-    if not a.no_open:
-        webbrowser.open(url)
     try:
         srv.serve_forever()
     except KeyboardInterrupt:

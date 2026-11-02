@@ -137,8 +137,8 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
       <p class="hint" data-t="watchHint"></p>
       <label class="f" for="watch-dir" data-t="folder"></label>
       <input id="watch-dir" data-ph="folderPh">
-      <label class="f"><input type="checkbox" id="watch-auto"> <span data-t="watchAuto"></span></label>
-      <label class="f"><input type="checkbox" id="watch-pub"> <span data-t="publishNow"></span></label>
+      <label class="chk"><input type="checkbox" id="watch-auto"> <span data-t="watchAuto"></span></label>
+      <label class="chk"><input type="checkbox" id="watch-pub"> <span data-t="publishNow"></span></label>
       <div class="pill-actions">
         <button class="btn primary sm" id="btn-watch-start" data-t="watchStart" disabled></button>
         <button class="btn outline sm" id="btn-watch-stop" data-t="watchStop"></button>
@@ -191,14 +191,14 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
         <select id="up-preset"></select>
         <label class="f" for="up-srt" data-t="srt"></label>
         <input id="up-srt" data-ph="srtPh">
-        <label class="f"><input type="checkbox" id="up-pub"> <span data-t="publishNow"></span></label>
+        <label class="chk"><input type="checkbox" id="up-pub"> <span data-t="publishNow"></span></label>
         <div class="pill-actions"><button class="btn primary" id="btn-export"><svg class="i" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg><span data-t="exportBtn"></span></button></div>
         <div class="toast" id="up-toast"></div>
       </div>
       <div class="card">
         <p class="eyebrow" data-t="fileTitle"></p>
         <div class="row"><input id="file-path" data-ph="filePh"><button class="btn secondary" id="btn-file" data-t="upload"></button></div>
-        <label class="f"><input type="checkbox" id="file-pub"> <span data-t="publishNow"></span></label>
+        <label class="chk"><input type="checkbox" id="file-pub"> <span data-t="publishNow"></span></label>
       </div>
       <div class="card">
         <div class="row" style="justify-content:space-between"><p class="eyebrow" style="margin:0" data-t="queue"></p><button class="btn outline sm" id="btn-clear" data-t="clear"></button></div>
@@ -430,7 +430,7 @@ $("up-title").onkeydown=e=>{if(e.key==="Enter")$("btn-export").click()};
   if(prefs.watch_dir){$("watch-dir").value=prefs.watch_dir;$("btn-watch-start").disabled=false}
   watchStatus();
   api("update_status").then(u=>{if(u.available){const e=$("upd");e.textContent=t("updAvail")+" "+u.latest+" ("+u.version+")";
-    if(u.url){const a=document.createElement("a");a.href=u.url;a.target="_blank";a.rel="noopener";a.textContent=" "+t("updGet");e.append(a)}e.hidden=false}});
+    if(u.url){e.append(document.createTextNode(" "+t("updGet")+": "+u.url))}e.hidden=false}});
   const s=await api("token_status");
   show(s.saved?"app":"onboarding");
   if(s.saved){tick();$("q").focus()}

@@ -1,0 +1,61 @@
+/* Mediastream brand — documento PDF (A4). Fuentes: Encode Sans Expanded (títulos) + Geist (cuerpo). */
+@import url("https://fonts.googleapis.com/css2?family=Encode+Sans+Expanded:wght@400;600;700;800;900&family=Geist:wght@400;500;700&display=swap");
+:root{--lime:#97d700;--lime-text:#5a8200;--violet:#a572eb;--ink:#1a1a1a;--card:#252525;--cloud:#ededed;--red:#fc3737;
+  --display:"Encode Sans Expanded","Helvetica Neue",Arial,sans-serif;--body:Geist,Inter,"Helvetica Neue",Arial,sans-serif}
+@page{size:A4;margin:0}
+*{box-sizing:border-box}
+html,body{margin:0;background:#fff;color:var(--ink);font:400 10pt/1.5 var(--body);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{counter-reset:pg}
+.page{width:210mm;height:297mm;padding:16mm 16mm 18mm 18mm;position:relative;overflow:hidden;page-break-after:always;break-after:page;counter-increment:pg}
+.page:last-child{page-break-after:auto;break-after:auto}
+.hdr{display:flex;justify-content:space-between;align-items:center;padding-bottom:3mm;border-bottom:.75pt solid var(--lime);margin-bottom:7mm}
+.hdr svg.logo{width:42mm;height:auto;display:block}
+.hdr .kind{font:700 8pt/1.2 var(--display);color:var(--lime-text);text-transform:uppercase;letter-spacing:.06em;text-align:right}
+.hdr .kind small{display:block;font-weight:400;letter-spacing:0;text-transform:none;color:var(--lime-text)}
+.ftr{position:absolute;left:18mm;right:16mm;bottom:8mm;display:flex;justify-content:space-between;border-top:.5pt solid rgba(26,26,26,.12);padding-top:2mm;font-size:7pt;color:rgba(26,26,26,.5)}
+.ftr .n::after{content:"Pág. " counter(pg)}
+h1{font:800 22pt/1.15 var(--display);margin:0 0 3mm}
+h2{font:700 14pt/1.25 var(--display);margin:0 0 3mm}
+h3{font:700 10.5pt/1.3 var(--display);margin:5mm 0 1.5mm}
+.eyebrow{font:700 8pt/1 var(--display);color:var(--lime-text);text-transform:uppercase;letter-spacing:.12em;margin:0 0 2mm}
+p{margin:0 0 2.6mm}
+.lead{font-size:11.5pt;color:rgba(26,26,26,.72);line-height:1.55}
+ul,ol{margin:0 0 3mm;padding-left:5mm}li{margin-bottom:1.2mm}
+code,.kbd{font:500 8.8pt/1.3 "SF Mono",Menlo,monospace;background:var(--cloud);padding:.3mm 1.3mm;border-radius:1.2mm}
+.kbd{border:.5pt solid #c9c9c9;background:#f7f7f7}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:7mm}
+.cols.wide-l{grid-template-columns:1.15fr .85fr}.cols.wide-r{grid-template-columns:.85fr 1.15fr}
+.steps{counter-reset:s;list-style:none;padding:0;margin:0 0 3mm}
+.steps li{counter-increment:s;position:relative;padding-left:9mm;margin-bottom:3mm;min-height:6.5mm}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:6.2mm;height:6.2mm;border-radius:50%;background:var(--lime);color:var(--ink);font:800 8.5pt/6.2mm var(--display);text-align:center}
+.steps ul{list-style:disc;padding-left:4.5mm;margin:1mm 0 0}.steps ul li{counter-increment:none;padding-left:0;margin-bottom:.8mm;min-height:0}.steps ul li::before{content:none}
+.shot{display:block;width:100%;border-radius:4mm;box-shadow:0 0 5mm rgba(142,101,216,.35);background:var(--ink)}
+.shot.crop{object-fit:cover;object-position:top}
+.cap{font-size:7.5pt;color:rgba(26,26,26,.55);margin:1.5mm 0 0;text-align:center}
+.note,.tip,.warn{border-left:3pt solid var(--lime);padding:2mm 0 2mm 4mm;margin:0 0 3.5mm}
+.note b:first-child,.tip b:first-child,.warn b:first-child{display:block;font:700 8pt/1.2 var(--display);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.8mm}
+.tip{border-color:var(--violet)}.tip b:first-child{color:#6b3fa0}
+.warn{border-color:var(--red)}.warn b:first-child{color:var(--red)}
+.note b:first-child{color:var(--lime-text)}
+table{border-collapse:collapse;width:100%;font-size:8.8pt;margin:0 0 4mm}
+th{background:var(--ink);color:#fff;font:600 7.5pt/1.2 var(--display);text-transform:uppercase;letter-spacing:.04em;text-align:left;padding:2mm 2.5mm}
+td{padding:2mm 2.5mm;vertical-align:top;border-bottom:.5pt solid rgba(26,26,26,.12)}
+tr:nth-child(even) td{background:#f4f4f4}
+.card{border:1pt solid #e0e0e0;border-radius:3mm;padding:4mm;margin-bottom:4mm}
+.card.dark{background:var(--ink);color:#fff;border:none}.card.dark h3,.card.dark .eyebrow{color:var(--lime)}
+.pill{display:inline-block;font:700 7pt/1 var(--display);text-transform:uppercase;padding:1.1mm 3mm;border-radius:10mm;background:var(--lime);color:var(--ink)}
+.pill.o{background:rgba(151,215,0,.18);color:#4a6a00;border:.75pt solid var(--lime)}
+.flow{display:flex;align-items:stretch;gap:3mm;margin:3mm 0 5mm}
+.flow .box{flex:1;border-radius:3mm;padding:3.5mm;background:var(--ink);color:#fff;font-size:8.6pt}
+.flow .box b{display:block;font:700 9.5pt/1.2 var(--display);color:var(--lime);margin-bottom:1mm}
+.flow .arrow{align-self:center;font:800 14pt var(--display);color:var(--lime-text)}
+.toc{columns:2;column-gap:8mm;font-size:9.5pt}
+.toc div{display:flex;justify-content:space-between;border-bottom:.5pt dotted #bbb;padding:1.4mm 0;break-inside:avoid}
+/* portada */
+.cover{background:#fff radial-gradient(circle,#c9c9c9 .9mm,transparent .9mm) 0 0/17mm 17mm;padding:0}
+.cover .in{position:absolute;left:18mm;right:18mm;top:20mm;bottom:20mm}
+.cover svg.logo{width:70mm;height:auto}
+.cover h1{font:900 38pt/1.08 var(--display);margin:48mm 0 5mm}
+.cover h1 span{color:var(--lime)}
+.cover .sub{font:700 14pt/1.35 var(--display);max-width:120mm}
+.cover .meta{position:absolute;bottom:0;left:0;right:0;font-size:9pt;color:rgba(26,26,26,.6);border-top:.75pt solid var(--lime);padding-top:3mm;display:flex;justify-content:space-between}
