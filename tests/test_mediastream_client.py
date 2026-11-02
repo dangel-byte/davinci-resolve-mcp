@@ -1,5 +1,6 @@
 """Offline checks for the Mediastream client's pure helpers (no network)."""
 import unittest
+from unittest import mock
 from mediastream_resolve import client as ms
 
 
@@ -148,10 +149,29 @@ class PanelCall(unittest.TestCase):
         call = make_panel_call(lambda a, p: seen.append((a, p)) or {"ok": a}, lambda: ["P1"], kc)
         return call, kc, seen
 
+    def test_diagnostics_has_no_token(self):
+        call, kc, _ = self._call()
+        kc.tok = "SECRET123"
+        out = call("diagnostics", {})["text"]
+        self.assertIn("Token saved: True", out)
+        self.assertNotIn("SECRET123", out)
+
+    def test_panel_page_exists(self):
+        from mediastream_resolve.panel import PAGE_FILE
+        self.assertTrue(PAGE_FILE.is_file())
+
+    def test_token_rejected_not_saved(self):
+        call, kc, _ = self._call()
+        def deny(**k): raise ms.MediastreamError("HTTP 401 GET /api/media: no")
+        with mock.patch.object(ms, "search", deny):
+            self.assertIn("rejected", call("token_save", {"token": "bad"})["error"])
+        self.assertEqual(call("token_status", {})["saved"], False)
+
     def test_token_never_returned_and_injected(self):
         call, kc, seen = self._call()
         self.assertEqual(call("token_status", {})["saved"], False)
-        self.assertEqual(call("token_save", {"token": " abc "}), {"saved": True})
+        with mock.patch.object(ms, "search", lambda **k: []):
+            self.assertEqual(call("token_save", {"token": " abc "}), {"saved": True})
         self.assertEqual(call("token_status", {})["saved"], True)
         call("search", {"query": "x"})
         self.assertEqual(seen[-1][1]["token"], "abc")     # server-side injection

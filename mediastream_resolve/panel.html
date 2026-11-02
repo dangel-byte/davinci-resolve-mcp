@@ -126,6 +126,7 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
       <div class="pill-actions">
         <button class="btn primary sm" id="btn-tok-save" data-t="save"></button>
         <button class="btn outline sm" id="btn-tok-del" data-t="delete"></button>
+        <button class="btn outline sm" id="btn-diag" data-t="diag"></button>
       </div>
       <div class="toast" id="cfg-toast"></div>
     </div>
@@ -219,7 +220,7 @@ const T={
   import:"Importar",embed:"Copiar embed",noResults:"Sin resultados.",page:"Página",
   upTitle:"Timeline → Platform",upHint:"Renderiza el timeline abierto con un preset de Deliver y lo sube.",titleLabel:"Título en Platform",titlePh:"Opcional",outDir:"Carpeta de exportación",preset:"Preset (Deliver)",srt:"Subtítulos .srt",srtPh:"Opcional: /ruta/archivo.srt",exportBtn:"Exportar y subir",
   fileTitle:"Subir un archivo",filePh:"/ruta/archivo.mp4",upload:"Subir",queue:"Cola",queueEmpty:"Vacía.",clear:"Limpiar",showLog:"Ver registro",
-  jobRunning:"En curso",jobDone:"Listo",jobError:"Error",saved:"Token guardado.",deleted:"Token borrado.",copied:"Embed copiado.",started:"Trabajo iniciado: míralo en la cola.",needFields:"Completa carpeta de exportación y preset.",needFile:"Indica la ruta del archivo.",watching:"Vigilando",notWatching:"Sin vigilar"},
+  jobRunning:"En curso",jobDone:"Listo",jobError:"Error",saved:"Token guardado.",deleted:"Token borrado.",copied:"Embed copiado.",diag:"Copiar diagnóstico",diagOk:"Diagnóstico copiado: pégalo en tu mensaje de soporte.",started:"Trabajo iniciado: míralo en la cola.",needFields:"Completa carpeta de exportación y preset.",needFile:"Indica la ruta del archivo.",watching:"Vigilando",notWatching:"Sin vigilar"},
  en:{logTitle:"Log",confirmDel:"Delete?",watchOn:"Watching",watchOff:"Not watching",jobsN:"running",importing:"Running",imported:"Imported",retry:"Retry",exportRunning:"An export is already running.",config:"Settings",language:"Language",token:"API token",tokenPh:"Paste your Platform API token",tokenSavedPh:"New token (stored in the Keychain)",
   onbEyebrow:"First run",onbTitle:"Connect your account",onbLead:"Paste your Mediastream Platform API token. It is stored in the macOS Keychain and never shown again.",onbSave:"Save and continue",
   save:"Save",delete:"Delete",done:"Done",watchTitle:"Watch folder",watchAuto:"Upload without asking",dismiss:"Dismiss",watchHint:"Uploads new videos that appear in the folder, plus a sibling .srt if present.",folder:"Folder",folderPh:"/path/to/folder",watchStart:"Watch",watchStop:"Stop",
@@ -227,7 +228,7 @@ const T={
   import:"Import",embed:"Copy embed",noResults:"No results.",page:"Page",
   upTitle:"Timeline to Platform",upHint:"Renders the open timeline with a Deliver preset and uploads it.",titleLabel:"Title on Platform",titlePh:"Optional",outDir:"Export folder",preset:"Deliver preset",srt:"Subtitles .srt",srtPh:"Optional: /path/file.srt",exportBtn:"Export and upload",
   fileTitle:"Upload a file",filePh:"/path/file.mp4",upload:"Upload",queue:"Queue",queueEmpty:"Empty.",clear:"Clear",showLog:"Show log",
-  jobRunning:"Running",jobDone:"Done",jobError:"Error",saved:"Token saved.",deleted:"Token deleted.",copied:"Embed copied.",started:"Job started: see the queue.",needFields:"Fill in export folder and preset.",needFile:"Enter the file path.",watching:"Watching",notWatching:"Not watching"},
+  jobRunning:"Running",jobDone:"Done",jobError:"Error",saved:"Token saved.",deleted:"Token deleted.",copied:"Embed copied.",diag:"Copy diagnostics",diagOk:"Diagnostics copied: paste it in your support message.",started:"Job started: see the queue.",needFields:"Fill in export folder and preset.",needFile:"Enter the file path.",watching:"Watching",notWatching:"Not watching"},
  pt:{logTitle:"Registro",confirmDel:"Apagar?",watchOn:"Monitorando",watchOff:"Sem monitorar",jobsN:"em andamento",importing:"Em andamento",imported:"Importado",retry:"Tentar de novo",exportRunning:"Já há uma exportação em andamento.",config:"Configuração",language:"Idioma",token:"API token",tokenPh:"Cole seu API token da Platform",tokenSavedPh:"Novo token (guardado no Keychain)",
   onbEyebrow:"Primeiro uso",onbTitle:"Conecte sua conta",onbLead:"Cole o API token da Mediastream Platform. Ele fica guardado no Keychain do macOS e nunca é exibido de novo.",onbSave:"Salvar e continuar",
   save:"Salvar",delete:"Apagar",done:"Pronto",watchTitle:"Pasta monitorada",watchAuto:"Enviar sem perguntar",dismiss:"Descartar",watchHint:"Envia os vídeos novos que aparecerem na pasta, com o .srt irmão se existir.",folder:"Pasta",folderPh:"/caminho/da/pasta",watchStart:"Monitorar",watchStop:"Parar",
@@ -235,7 +236,7 @@ const T={
   import:"Importar",embed:"Copiar embed",noResults:"Sem resultados.",page:"Página",
   upTitle:"Timeline para a Platform",upHint:"Renderiza a timeline aberta com um preset do Deliver e envia.",titleLabel:"Título na Platform",titlePh:"Opcional",outDir:"Pasta de exportação",preset:"Preset do Deliver",srt:"Legendas .srt",srtPh:"Opcional: /caminho/arquivo.srt",exportBtn:"Exportar e enviar",
   fileTitle:"Enviar um arquivo",filePh:"/caminho/arquivo.mp4",upload:"Enviar",queue:"Fila",queueEmpty:"Vazia.",clear:"Limpar",showLog:"Ver registro",
-  jobRunning:"Em andamento",jobDone:"Pronto",jobError:"Erro",saved:"Token salvo.",deleted:"Token apagado.",copied:"Embed copiado.",started:"Trabalho iniciado: veja a fila.",needFields:"Preencha a pasta de exportação e o preset.",needFile:"Informe o caminho do arquivo.",watching:"Monitorando",notWatching:"Sem monitorar"}
+  jobRunning:"Em andamento",jobDone:"Pronto",jobError:"Erro",saved:"Token salvo.",deleted:"Token apagado.",copied:"Embed copiado.",diag:"Copiar diagnóstico",diagOk:"Diagnóstico copiado: cole na sua mensagem de suporte.",started:"Trabalho iniciado: veja a fila.",needFields:"Preencha a pasta de exportação e o preset.",needFile:"Informe o caminho do arquivo.",watching:"Monitorando",notWatching:"Sem monitorar"}
 };
 let lang="es", prefs={}, page=0, lastQuery="", cleared=new Set(), PAGE_SIZE=8;
 const t=k=>(T[lang][k]||T.es[k]||k);
@@ -258,6 +259,7 @@ const ERRS=[["render did not start",{es:"No se pudo iniciar el render.",en:"Rend
  ["render failed",{es:"El render falló.",en:"The render failed.",pt:"O render falhou."}],
  ["failed verification",{es:"El render no pasó la verificación; no se subió.",en:"The render failed verification; nothing was uploaded.",pt:"O render não passou na verificação; nada foi enviado."}],
  ["missing API token",{es:"Falta el API token.",en:"Missing API token.",pt:"Falta o API token."}],
+ ["token rejected",{es:"Platform rechazó el token. Revisa que esté completo y tenga permisos.",en:"Platform rejected the token. Check it is complete and has permissions.",pt:"A Platform rejeitou o token. Verifique se está completo e tem permissões."}],
  ["already running",{es:"Ya hay una exportación en curso.",en:"An export is already running.",pt:"Já há uma exportação em andamento."}]];
 function errLocal(m){const f=ERRS.find(e=>String(m).includes(e[0]));return f?f[1][lang]:m}
 let flashTimer=null;
@@ -288,6 +290,7 @@ $("btn-onb").onclick=async()=>{
   const r=await api("token_save",{token:v("tok-onb")}); $("tok-onb").value="";
   if(r.saved){show("app");loadPresets()} else say("onb-err",errMsg(r)||"error",true);
 };
+$("btn-diag").onclick=async()=>{const r=await api("diagnostics");await navigator.clipboard.writeText(r.text||errMsg(r));say("cfg-toast",t("diagOk"))};
 $("btn-tok-save").onclick=async()=>{const r=await api("token_save",{token:v("tok-cfg")});$("tok-cfg").value="";say("cfg-toast",r.saved?t("saved"):errMsg(r),!r.saved)};
 let delArmed=null;
 $("btn-tok-del").onclick=async()=>{

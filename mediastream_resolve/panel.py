@@ -11,7 +11,10 @@ prefs.json under ~/.config/mediastream-resolve (%APPDATA% on Windows).
 """
 import argparse
 import json
+import logging
+import logging.handlers
 import os
+import platform
 import pathlib
 import secrets
 import shutil
@@ -22,10 +25,11 @@ import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-PAGE_FILE = pathlib.Path(__file__).with_name("mediastream_panel.html")
+PAGE_FILE = pathlib.Path(__file__).with_name("panel.html")
 _CFG = (pathlib.Path(os.environ.get("APPDATA") or pathlib.Path.home() / "AppData" / "Roaming")
         if sys.platform == "win32" else pathlib.Path.home() / ".config")
 PREFS_FILE = _CFG / "mediastream-resolve" / "prefs.json"
+LOG_FILE = PREFS_FILE.with_name("panel.log")
 KEYCHAIN = ("mediastream-resolve", "api-token")
 LONG_ACTIONS = {"download", "upload", "export_upload", "subtitle"}
 
@@ -224,6 +228,29 @@ def _prefs_set(new):
     return prefs
 
 
+log = logging.getLogger("mediastream")
+
+
+def init_log():
+    """Rotating log (3 x 200 KB). Records action names and errors only, never params or tokens."""
+    if log.handlers:
+        return
+    LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+    h = logging.handlers.RotatingFileHandler(LOG_FILE, maxBytes=200_000, backupCount=2, encoding="utf-8")
+    h.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
+    log.addHandler(h)
+    log.setLevel(logging.INFO)
+
+
+def diagnostics(token_saved):
+    try:
+        tail = "".join(LOG_FILE.read_text(encoding="utf-8").splitlines(True)[-40:])
+    except OSError:
+        tail = "(no log yet)"
+    return (f"Mediastream panel diagnostics\nOS: {platform.platform()}\nPython: {platform.python_version()}\n"
+            f"Token saved: {token_saved}\nLog file: {LOG_FILE}\n--- last log lines ---\n{tail}")
+
+
 def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
     """Build the /api dispatcher. `mediastream`/`list_presets` are injected (tests, lazy import)."""
     kc = keychain or Keychain()
@@ -244,8 +271,16 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
                 return {"error": "empty token"}
             if any(c.isspace() or not c.isprintable() for c in t):
                 return {"error": "token has spaces or control characters"}  # also guards `security -i`
+            from .client import MediastreamError, search
+            try:
+                search(limit=1, token=t)  # Platform rejects a bad token; offline still saves
+            except MediastreamError as e:
+                if str(e).startswith(("HTTP 401", "HTTP 403")):
+                    return {"error": "token rejected by Platform"}
             kc.save(t)
             return {"saved": True}
+        if action == "diagnostics":
+            return {"text": diagnostics(bool(kc.load()))}
         if action == "token_delete":
             kc.delete()
             return {"saved": False}
@@ -314,12 +349,16 @@ def make_server(call, key, port=0):
             if self.path != "/api" or not self._host_ok() or \
                     not secrets.compare_digest(self.headers.get("X-Panel-Key", ""), key):
                 return self._send(403, '{"error":"forbidden"}')
+            req = {}
             try:
                 n = min(int(self.headers.get("Content-Length", 0)), 1 << 20)
                 req = json.loads(self.rfile.read(n) or b"{}")
                 res = call(req.get("action", ""), req.get("params") or {})
             except Exception as e:  # surface to the UI instead of a dropped socket
                 res = {"error": f"{type(e).__name__}: {e}"}
+            err = res.get("error") if isinstance(res, dict) else None
+            log.info("%s %s", req.get("action", "?"),
+                     ("ERROR " + str(err)[:200]) if err else "ok")
             self._send(200, json.dumps(res, default=str))
 
         def log_message(self, *a):
@@ -333,6 +372,7 @@ def main():
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-open", action="store_true")
     a = ap.parse_args()
+    init_log()
     from .actions import make_mediastream
     from .resolve import ScriptAdapter
     resolve = ScriptAdapter()
