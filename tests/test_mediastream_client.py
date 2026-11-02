@@ -111,7 +111,7 @@ class WatcherScan(unittest.TestCase):
                        lambda mid, srt, token=None: calls.append(srt), auto=True)
         new = os.path.join(d, "new.mp4")
         open(new, "wb").write(b"abc")
-        open(new + ".srt", "w").write("1")
+        open(new + ".srt", "w", encoding="utf-8").write("1")
         self.assertEqual(w.scan(), [])        # first sighting: size not yet confirmed
         self.assertEqual(len(w.scan()), 1)    # stable -> uploaded
         self.assertEqual(w.scan(), [])        # never twice

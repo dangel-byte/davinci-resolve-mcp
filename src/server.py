@@ -31977,7 +31977,7 @@ class _MediastreamResolve:
             raise ResolveError("render timed out", "RENDER_TIMEOUT")
         v = render("verify_output", {"job_id": job_id})
         out = v.get("output_path")
-        if not (out and os.path.isfile(out) and v.get("verified", True) is not False):
+        if not (out and os.path.isfile(out) and _coerce_bool(v.get("verified", True)) is not False):
             raise ResolveError("render output failed verification; not uploading", "RENDER_UNVERIFIED")
         return out
 

@@ -32,7 +32,7 @@ def status(prefs, cache_file, fetch=None, now=None):
         return out
     now = now or time.time()
     try:
-        cached = json.loads(cache_file.read_text())
+        cached = json.loads(cache_file.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         cached = {}
     if now - cached.get("checked", 0) > DAY:
@@ -42,7 +42,7 @@ def status(prefs, cache_file, fetch=None, now=None):
         except Exception:  # offline or bad manifest: retry next launch, never block the panel
             cached = {**cached, "checked": now - DAY + 3600}
         try:
-            cache_file.write_text(json.dumps(cached))
+            cache_file.write_text(json.dumps(cached), encoding="utf-8")
         except OSError:
             pass
     if cached.get("latest") and newer(cached["latest"]):

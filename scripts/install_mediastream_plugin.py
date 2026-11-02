@@ -37,7 +37,7 @@ def main() -> int:
     shutil.copytree(SRC, DEST)
     if NODE.exists():
         shutil.copy2(NODE, DEST / "WorkflowIntegration.node")
-    (DEST / "config.json").write_text(json.dumps({"repo": str(REPO)}))
+    (DEST / "config.json").write_text(json.dumps({"repo": str(REPO)}), encoding="utf-8")
     print("installed", DEST, "- restart Resolve (Studio only)")
     return 0
 

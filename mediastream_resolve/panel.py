@@ -215,7 +215,7 @@ class WatchState:
 
 def _prefs_get():
     try:
-        return json.loads(PREFS_FILE.read_text())
+        return json.loads(PREFS_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return {}
 
@@ -224,7 +224,7 @@ def _prefs_set(new):
     allowed = {"lang", "export_dir", "watch_dir", "preset", "page_size", "publish"}
     prefs = _prefs_get() | {k: v for k, v in new.items() if k in allowed}
     PREFS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    PREFS_FILE.write_text(json.dumps(prefs))
+    PREFS_FILE.write_text(json.dumps(prefs), encoding="utf-8")
     return prefs
 
 
