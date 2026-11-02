@@ -160,6 +160,12 @@ def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] 
     return path
 
 
+def thumbnail_url(media: dict) -> Optional[str]:
+    thumbs = [t for t in (media.get("thumbnails") or []) if isinstance(t, dict) and t.get("url")]
+    pick = next((t for t in thumbs if t.get("is_default")), thumbs[0] if thumbs else None)
+    return _abs(pick["url"]) if pick else None
+
+
 def embed_url(media: dict) -> Optional[str]:
     acct = media.get("account")
     acct = (acct.get("_id") or acct.get("id")) if isinstance(acct, dict) else (acct or media.get("account_id"))

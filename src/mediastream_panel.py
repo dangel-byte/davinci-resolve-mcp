@@ -1,52 +1,99 @@
-"""Local web panel for the Mediastream tool (Resolve Free friendly: no Studio, no in-app scripting).
+"""Local web panel for the Mediastream tool (works in Resolve Free and Studio; also the
+window the Workflow Integration plugin shows).
 
     venv/bin/python -m src.mediastream_panel [--port 8765] [--no-open]
 
 Loopback only. Every /api call needs the per-launch key embedded in the served page
-(a random website cannot POST to localhost without it). The API token stays in this
-process's memory; it is never written to disk.
+(a random website cannot POST to localhost without it). The API token lives in the macOS
+Keychain (service "mediastream-resolve") and is never sent back to the page; on other
+platforms it stays in this process's memory. Non-secret preferences go to
+~/.config/mediastream-resolve/prefs.json.
 """
 import argparse
 import json
 import os
+import pathlib
 import secrets
+import subprocess
+import sys
 import threading
+import time
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-PAGE = """<!doctype html><meta charset=utf-8><title>Mediastream · Resolve</title>
-<style>body{font:14px system-ui;max-width:760px;margin:2rem auto;padding:0 1rem}
-input{width:100%;padding:.4rem;margin:.2rem 0;box-sizing:border-box}button{padding:.4rem .8rem}
-fieldset{margin:1rem 0}.r{display:flex;gap:.5rem;align-items:center;padding:.3rem 0;border-bottom:1px solid #8883}
-.r span{flex:1}pre{background:#8881;padding:.6rem;white-space:pre-wrap}</style>
-<h2>Mediastream ↔ DaVinci Resolve</h2>
-<fieldset><legend>API token (memory only)</legend><input id=tok type=password></fieldset>
-<fieldset><legend>Buscar y traer al Media Pool</legend>
-<input id=q placeholder="buscar…"><button onclick=search()>Buscar</button><div id=res></div></fieldset>
-<fieldset><legend>Subir archivo</legend><input id=up placeholder="/ruta/archivo.mp4">
-<button onclick="call('upload',{path:v('up')})">Subir</button></fieldset>
-<fieldset><legend>Exportar timeline actual y subir</legend>
-<input id=td placeholder="carpeta destino"><input id=pr placeholder="preset de video de Deliver">
-<input id=ti placeholder="título (opcional)"><input id=srt placeholder=".srt (opcional)">
-<button onclick="call('export_upload',{target_dir:v('td'),from_preset:v('pr'),title:v('ti'),srt_path:v('srt')})">Exportar y subir</button></fieldset>
-<fieldset><legend>Carpeta vigilada (sube videos nuevos + .srt hermano)</legend>
-<input id=wf placeholder="carpeta a vigilar">
-<button onclick="call('watch_start',{folder:v('wf')})">Vigilar</button>
-<button onclick="call('watch_stop',{})">Parar</button>
-<button onclick="call('watch_status',{})">Estado</button></fieldset>
-<pre id=out></pre>
-<script>
-const KEY="__KEY__",v=i=>document.getElementById(i).value.trim(),out=document.getElementById('out');
-async function call(action,params){out.textContent=action+'…';
- const r=await fetch('/api',{method:'POST',headers:{'X-Panel-Key':KEY},
-  body:JSON.stringify({action,params:{...params,token:v('tok')}})});
- const j=await r.json();out.textContent=JSON.stringify(j,null,2);return j}
-async function search(){const j=await call('search',{query:v('q')});const d=document.getElementById('res');d.textContent='';
- for(const m of j.items||[]){const row=document.createElement('div');row.className='r';
-  const s=document.createElement('span');s.textContent=m.title+' ('+m.id+')';row.append(s);
-  const b=document.createElement('button');b.textContent='Descargar + importar';b.onclick=()=>call('download',{media_id:m.id});row.append(b);
-  const e=document.createElement('button');e.textContent='Copiar embed';e.onclick=()=>navigator.clipboard.writeText(m.embed||'');row.append(e);d.append(row)}}
-</script>"""
+PAGE_FILE = pathlib.Path(__file__).with_name("mediastream_panel.html")
+PREFS_FILE = pathlib.Path.home() / ".config" / "mediastream-resolve" / "prefs.json"
+KEYCHAIN = ("mediastream-resolve", "api-token")
+LONG_ACTIONS = {"download", "upload", "export_upload", "subtitle"}
+
+
+class Keychain:
+    """macOS Keychain via `security -i` (the secret goes over stdin, never argv)."""
+
+    def __init__(self):
+        self.mem = None
+        self.mac = sys.platform == "darwin"
+
+    def load(self):
+        if self.mem:
+            return self.mem
+        if self.mac:
+            r = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN[0],
+                                "-a", KEYCHAIN[1], "-w"], capture_output=True, text=True)
+            if r.returncode == 0:
+                self.mem = r.stdout.strip() or None
+        return self.mem
+
+    def save(self, token):
+        self.mem = token
+        if self.mac:
+            safe = token.replace("\\", "\\\\").replace('"', '\\"')
+            subprocess.run(["security", "-i"], text=True, capture_output=True, input=(
+                f'add-generic-password -U -s {KEYCHAIN[0]} -a {KEYCHAIN[1]} -w "{safe}"\n'))
+
+    def delete(self):
+        self.mem = None
+        if self.mac:
+            subprocess.run(["security", "delete-generic-password", "-s", KEYCHAIN[0],
+                            "-a", KEYCHAIN[1]], capture_output=True)
+
+
+class Jobs:
+    """Background jobs so long actions (export, upload, download) never block the page."""
+
+    def __init__(self, call):
+        self.call, self.items, self.lock = call, [], threading.Lock()
+
+    def start(self, action, params, label):
+        job = {"id": secrets.token_hex(4), "action": action, "label": label,
+               "status": "running", "started": time.time(), "result": None}
+        with self.lock:
+            self.items.append(job)
+            del self.items[:-30]
+
+        def run():
+            try:
+                res = self.call(action, params)
+                err = res.get("error")
+                job["result"] = res
+                job["status"] = "error" if err else "done"
+            except Exception as e:
+                job["result"], job["status"] = {"error": f"{type(e).__name__}: {e}"}, "error"
+        threading.Thread(target=run, daemon=True).start()
+        return job["id"]
+
+    def list(self):
+        with self.lock:
+            return [{k: v for k, v in j.items() if k != "result"} | {
+                "message": _summary(j)} for j in reversed(self.items)]
+
+
+def _summary(job):
+    r = job.get("result") or {}
+    err = r.get("error")
+    if err:
+        return err.get("message") if isinstance(err, dict) else str(err)
+    return r.get("media_id") or r.get("path") or ""
 
 
 class WatchState:
@@ -83,6 +130,70 @@ class WatchState:
                 "log": self.w.log[-20:] if self.w else []}
 
 
+def _prefs_get():
+    try:
+        return json.loads(PREFS_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _prefs_set(new):
+    allowed = {"lang", "export_dir", "watch_dir", "preset", "page_size", "publish"}
+    prefs = _prefs_get() | {k: v for k, v in new.items() if k in allowed}
+    PREFS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    PREFS_FILE.write_text(json.dumps(prefs))
+    return prefs
+
+
+def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
+    """Build the /api dispatcher. `mediastream`/`list_presets` are injected (tests, lazy import)."""
+    kc = keychain or Keychain()
+    watch = WatchState()
+
+    def with_token(params):
+        params = dict(params or {})
+        params["token"] = params.get("token") or kc.load()
+        return params
+
+    def call(action, params):
+        params = params or {}
+        if action == "token_status":
+            return {"saved": bool(kc.load())}
+        if action == "token_save":
+            t = (params.get("token") or "").strip()
+            if not t:
+                return {"error": "empty token"}
+            kc.save(t)
+            return {"saved": True}
+        if action == "token_delete":
+            kc.delete()
+            return {"saved": False}
+        if action == "prefs_get":
+            return _prefs_get()
+        if action == "prefs_set":
+            return _prefs_set(params)
+        if action == "presets":
+            return {"presets": list_presets()}
+        if action == "watch_start":
+            return watch.start(params.get("folder"), kc.load())
+        if action == "watch_stop":
+            return watch.halt()
+        if action == "watch_status":
+            return watch.status()
+        if action == "jobs":
+            return {"jobs": call.jobs.list(), "watch": watch.status()}
+        if action == "job_start":
+            inner = params.get("action")
+            if inner not in LONG_ACTIONS:
+                return {"error": "action not allowed as job"}
+            return {"job_id": call.jobs.start(inner, with_token(params.get("params")),
+                                              params.get("label") or inner)}
+        return mediastream(action, with_token(params))
+
+    call.jobs = jobs_cls(lambda a, p: mediastream(a, p))
+    return call
+
+
 def make_server(call, key, port=0):
     """call(action, params) -> dict. Injected so tests don't need Resolve."""
     class H(BaseHTTPRequestHandler):
@@ -99,7 +210,8 @@ def make_server(call, key, port=0):
 
         def do_GET(self):
             if self.path == "/" and self._host_ok():
-                return self._send(200, PAGE.replace("__KEY__", key), "text/html")
+                page = PAGE_FILE.read_text(encoding="utf-8").replace("__KEY__", key)
+                return self._send(200, page, "text/html")
             self._send(404, "{}")
 
         def do_POST(self):
@@ -111,7 +223,7 @@ def make_server(call, key, port=0):
                 req = json.loads(self.rfile.read(n) or b"{}")
                 res = call(req.get("action", ""), req.get("params") or {})
             except Exception as e:  # surface to the UI instead of a dropped socket
-                res = {"success": False, "error": f"{type(e).__name__}: {e}"}
+                res = {"error": f"{type(e).__name__}: {e}"}
             self._send(200, json.dumps(res, default=str))
 
         def log_message(self, *a):
@@ -125,19 +237,12 @@ def main():
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-open", action="store_true")
     a = ap.parse_args()
-    from src.server import mediastream  # heavy import; only when actually serving
-    key = secrets.token_urlsafe(24)
-    watch = WatchState()
+    from src.server import mediastream, render  # heavy import; only when actually serving
 
-    def call(action, params):
-        if action == "watch_start":
-            return watch.start(params.get("folder"), params.get("token"))
-        if action == "watch_stop":
-            return watch.halt()
-        if action == "watch_status":
-            return watch.status()
-        return mediastream(action, params)
-    srv = make_server(call, key, a.port)
+    def list_presets():
+        return (render("list_presets", {}) or {}).get("presets", [])
+    key = secrets.token_urlsafe(24)
+    srv = make_server(make_panel_call(mediastream, list_presets), key, a.port)
     url = f"http://127.0.0.1:{srv.server_address[1]}/"
     print(f"Mediastream panel: {url}  (Ctrl+C to stop)", flush=True)
     if not a.no_open:

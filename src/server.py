@@ -31972,7 +31972,8 @@ def mediastream(action: str, params: Optional[Dict[str, Any]] = None) -> Dict[st
         if action == "search":
             items = ms.search(p.get("query", ""), int(p.get("limit", 20)), int(p.get("skip", 0)), tok)
             return _ok(items=[{"id": ms.media_id(m), "title": m.get("title"),
-                               "embed": ms.embed_url(m)} for m in items])
+                               "embed": ms.embed_url(m), "thumb": ms.thumbnail_url(m),
+                               "duration": m.get("duration")} for m in items])
         if action == "embed":
             m = ms.get(p["media_id"], token=tok)
             return _ok(embed=ms.embed_url(m or {}))

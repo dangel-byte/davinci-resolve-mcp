@@ -62,3 +62,42 @@ class WatcherScan(unittest.TestCase):
         self.assertEqual(calls, [new, new + ".srt"])  # old.mp4 was baseline
 
 
+
+
+class PanelCall(unittest.TestCase):
+    def _call(self):
+        from src.mediastream_panel import make_panel_call
+
+        class KC:  # in-memory keychain stand-in
+            tok = None
+            def load(self): return self.tok
+            def save(self, t): self.tok = t
+            def delete(self): self.tok = None
+        seen = []
+        kc = KC()
+        call = make_panel_call(lambda a, p: seen.append((a, p)) or {"ok": a}, lambda: ["P1"], kc)
+        return call, kc, seen
+
+    def test_token_never_returned_and_injected(self):
+        call, kc, seen = self._call()
+        self.assertEqual(call("token_status", {}), {"saved": False})
+        self.assertEqual(call("token_save", {"token": " abc "}), {"saved": True})
+        self.assertEqual(call("token_status", {}), {"saved": True})
+        call("search", {"query": "x"})
+        self.assertEqual(seen[-1][1]["token"], "abc")     # server-side injection
+        self.assertNotIn("abc", str(call("prefs_get", {})))
+        call("token_delete", {})
+        self.assertEqual(call("token_status", {}), {"saved": False})
+
+    def test_job_start_allowlist(self):
+        call, kc, seen = self._call()
+        self.assertIn("error", call("job_start", {"action": "search", "params": {}}))
+        jid = call("job_start", {"action": "upload", "params": {"path": "/x"}, "label": "L"})["job_id"]
+        import time
+        for _ in range(50):
+            jobs = call("jobs", {})["jobs"]
+            if jobs[0]["status"] != "running":
+                break
+            time.sleep(0.05)
+        self.assertEqual((jobs[0]["id"], jobs[0]["status"]), (jid, "done"))
+        self.assertEqual(call("presets", {}), {"presets": ["P1"]})
