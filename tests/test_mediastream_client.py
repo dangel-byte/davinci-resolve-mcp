@@ -244,6 +244,11 @@ class QaRegressions(unittest.TestCase):
         with mock.patch.object(ms, "search", down):
             self.assertEqual(call("token_save", {"token": "abc"}), {"saved": True})
 
+    def test_non_ascii_token_rejected(self):
+        from mediastream_resolve.panel import make_panel_call
+        call = make_panel_call(lambda a, p: {}, lambda: [], mock.Mock(load=lambda: None))
+        self.assertIn("error", call("token_save", {"token": "tökén"}))
+
     def test_http_survives_non_object_bodies(self):
         import http.client, json, threading
         from mediastream_resolve.panel import make_server

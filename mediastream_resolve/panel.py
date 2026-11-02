@@ -270,8 +270,8 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
             t = (params.get("token") or "").strip()
             if not t:
                 return {"error": "empty token"}
-            if any(c.isspace() or not c.isprintable() for c in t):
-                return {"error": "token has spaces or control characters"}  # also guards `security -i`
+            if not t.isascii() or any(c.isspace() or not c.isprintable() for c in t):
+                return {"error": "token has spaces, control or non-ASCII characters"}  # also guards `security -i`
             from .client import MediastreamError, search
             try:
                 search(limit=1, token=t)  # Platform rejects a bad token; offline still saves
