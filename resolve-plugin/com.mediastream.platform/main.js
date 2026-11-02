@@ -1,4 +1,4 @@
-// Thin Electron shell: starts the local Mediastream panel (Python, src/mediastream_panel.py)
+// Thin Electron shell: starts the local Mediastream panel (Python, mediastream_resolve/panel.py)
 // and shows it in this plugin window. All logic lives in the Python side.
 // config.json ({"repo": "..."}) is written by scripts/install_mediastream_plugin.py.
 const { app, BrowserWindow, dialog } = require('electron');
@@ -22,7 +22,7 @@ function start() {
   const py = path.join(repo, 'venv', 'bin', 'python');
   if (!fs.existsSync(py)) return fail('Python not found: ' + py);
 
-  child = spawn(py, ['-m', 'src.mediastream_panel', '--no-open', '--port', '0'], { cwd: repo });
+  child = spawn(py, ['-m', 'mediastream_resolve.panel', '--no-open', '--port', '0'], { cwd: repo });
   let buf = '';
   child.stdout.on('data', (d) => {
     buf += d;

@@ -134,6 +134,7 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
       <p class="hint" data-t="watchHint"></p>
       <label class="f" for="watch-dir" data-t="folder"></label>
       <input id="watch-dir" data-ph="folderPh">
+      <label class="f"><input type="checkbox" id="watch-auto"> <span data-t="watchAuto"></span></label>
       <div class="pill-actions">
         <button class="btn primary sm" id="btn-watch-start" data-t="watchStart" disabled></button>
         <button class="btn outline sm" id="btn-watch-stop" data-t="watchStop"></button>
@@ -213,7 +214,7 @@ const $=id=>document.getElementById(id), v=id=>$(id).value.trim();
 const T={
  es:{logTitle:"Registro",confirmDel:"¿Borrar?",watchOn:"Vigilando",watchOff:"Sin vigilar",jobsN:"en curso",importing:"En curso",imported:"Importado",retry:"Reintentar",exportRunning:"Ya hay una exportación en curso.",config:"Configuración",language:"Idioma",token:"API token",tokenPh:"Pega tu API token de Platform",tokenSavedPh:"Nuevo token (queda guardado en el llavero)",
   onbEyebrow:"Primer uso",onbTitle:"Conecta tu cuenta",onbLead:"Pega el API token de Mediastream Platform. Se guarda en el llavero de macOS y nunca se muestra de nuevo.",onbSave:"Guardar y continuar",
-  save:"Guardar",delete:"Borrar",done:"Listo",watchTitle:"Carpeta vigilada",watchHint:"Sube los videos nuevos que aparezcan en la carpeta, con su .srt hermano si existe.",folder:"Carpeta",folderPh:"/ruta/a/la/carpeta",watchStart:"Vigilar",watchStop:"Parar",
+  save:"Guardar",delete:"Borrar",done:"Listo",watchTitle:"Carpeta vigilada",watchAuto:"Subir sin preguntar",dismiss:"Descartar",watchHint:"Sube los videos nuevos que aparezcan en la carpeta, con su .srt hermano si existe.",folder:"Carpeta",folderPh:"/ruta/a/la/carpeta",watchStart:"Vigilar",watchStop:"Parar",
   tabMedia:"Media",tabUpload:"Subir",library:"Biblioteca",libraryHint:"Busca en tu catálogo de Platform e importa el video al Media Pool.",search:"Buscar",searchPh:"Buscar en Platform…",
   import:"Importar",embed:"Copiar embed",noResults:"Sin resultados.",page:"Página",
   upTitle:"Timeline → Platform",upHint:"Renderiza el timeline abierto con un preset de Deliver y lo sube.",titleLabel:"Título en Platform",titlePh:"Opcional",outDir:"Carpeta de exportación",preset:"Preset (Deliver)",srt:"Subtítulos .srt",srtPh:"Opcional: /ruta/archivo.srt",exportBtn:"Exportar y subir",
@@ -221,7 +222,7 @@ const T={
   jobRunning:"En curso",jobDone:"Listo",jobError:"Error",saved:"Token guardado.",deleted:"Token borrado.",copied:"Embed copiado.",started:"Trabajo iniciado: míralo en la cola.",needFields:"Completa carpeta de exportación y preset.",needFile:"Indica la ruta del archivo.",watching:"Vigilando",notWatching:"Sin vigilar"},
  en:{logTitle:"Log",confirmDel:"Delete?",watchOn:"Watching",watchOff:"Not watching",jobsN:"running",importing:"Running",imported:"Imported",retry:"Retry",exportRunning:"An export is already running.",config:"Settings",language:"Language",token:"API token",tokenPh:"Paste your Platform API token",tokenSavedPh:"New token (stored in the Keychain)",
   onbEyebrow:"First run",onbTitle:"Connect your account",onbLead:"Paste your Mediastream Platform API token. It is stored in the macOS Keychain and never shown again.",onbSave:"Save and continue",
-  save:"Save",delete:"Delete",done:"Done",watchTitle:"Watch folder",watchHint:"Uploads new videos that appear in the folder, plus a sibling .srt if present.",folder:"Folder",folderPh:"/path/to/folder",watchStart:"Watch",watchStop:"Stop",
+  save:"Save",delete:"Delete",done:"Done",watchTitle:"Watch folder",watchAuto:"Upload without asking",dismiss:"Dismiss",watchHint:"Uploads new videos that appear in the folder, plus a sibling .srt if present.",folder:"Folder",folderPh:"/path/to/folder",watchStart:"Watch",watchStop:"Stop",
   tabMedia:"Media",tabUpload:"Upload",library:"Library",libraryHint:"Search your Platform catalog and import the video into the Media Pool.",search:"Search",searchPh:"Search Platform…",
   import:"Import",embed:"Copy embed",noResults:"No results.",page:"Page",
   upTitle:"Timeline to Platform",upHint:"Renders the open timeline with a Deliver preset and uploads it.",titleLabel:"Title on Platform",titlePh:"Optional",outDir:"Export folder",preset:"Deliver preset",srt:"Subtitles .srt",srtPh:"Optional: /path/file.srt",exportBtn:"Export and upload",
@@ -229,7 +230,7 @@ const T={
   jobRunning:"Running",jobDone:"Done",jobError:"Error",saved:"Token saved.",deleted:"Token deleted.",copied:"Embed copied.",started:"Job started: see the queue.",needFields:"Fill in export folder and preset.",needFile:"Enter the file path.",watching:"Watching",notWatching:"Not watching"},
  pt:{logTitle:"Registro",confirmDel:"Apagar?",watchOn:"Monitorando",watchOff:"Sem monitorar",jobsN:"em andamento",importing:"Em andamento",imported:"Importado",retry:"Tentar de novo",exportRunning:"Já há uma exportação em andamento.",config:"Configuração",language:"Idioma",token:"API token",tokenPh:"Cole seu API token da Platform",tokenSavedPh:"Novo token (guardado no Keychain)",
   onbEyebrow:"Primeiro uso",onbTitle:"Conecte sua conta",onbLead:"Cole o API token da Mediastream Platform. Ele fica guardado no Keychain do macOS e nunca é exibido de novo.",onbSave:"Salvar e continuar",
-  save:"Salvar",delete:"Apagar",done:"Pronto",watchTitle:"Pasta monitorada",watchHint:"Envia os vídeos novos que aparecerem na pasta, com o .srt irmão se existir.",folder:"Pasta",folderPh:"/caminho/da/pasta",watchStart:"Monitorar",watchStop:"Parar",
+  save:"Salvar",delete:"Apagar",done:"Pronto",watchTitle:"Pasta monitorada",watchAuto:"Enviar sem perguntar",dismiss:"Descartar",watchHint:"Envia os vídeos novos que aparecerem na pasta, com o .srt irmão se existir.",folder:"Pasta",folderPh:"/caminho/da/pasta",watchStart:"Monitorar",watchStop:"Parar",
   tabMedia:"Mídia",tabUpload:"Enviar",library:"Biblioteca",libraryHint:"Busque no seu catálogo da Platform e importe o vídeo para o Media Pool.",search:"Buscar",searchPh:"Buscar na Platform…",
   import:"Importar",embed:"Copiar embed",noResults:"Sem resultados.",page:"Página",
   upTitle:"Timeline para a Platform",upHint:"Renderiza a timeline aberta com um preset do Deliver e envia.",titleLabel:"Título na Platform",titlePh:"Opcional",outDir:"Pasta de exportação",preset:"Preset do Deliver",srt:"Legendas .srt",srtPh:"Opcional: /caminho/arquivo.srt",exportBtn:"Exportar e enviar",
@@ -355,6 +356,10 @@ function renderJobs(r){
   const jobs=(r.jobs||[]).filter(j=>!cleared.has(j.id));
   const w=r.watch||{};
   if(w.watching){const row=document.createElement("div");row.className="job";const tt=document.createElement("div");tt.className="tt";tt.textContent=t("watching")+": "+w.watching;row.append(tt);box.append(row);
+    for(const f of w.pending||[]){const rr=document.createElement("div");rr.className="job";const x=document.createElement("div");x.className="tt";x.textContent=f;
+      const up=document.createElement("button");up.className="btn primary sm";up.textContent=t("upload");up.onclick=async()=>{up.disabled=true;await api("watch_approve",{file:f});pollJobs()};
+      const ds=document.createElement("button");ds.className="btn outline sm";ds.textContent=t("dismiss");ds.onclick=async()=>{await api("watch_dismiss",{file:f});pollJobs()};
+      rr.append(x,up,ds);box.append(rr)}
     for(const l of w.log||[]){const rr=document.createElement("div");rr.className="job";const x=document.createElement("div");x.className="tt";x.textContent=l.file;const sp=document.createElement("span");sp.textContent=l.error||l.media_id||"";x.append(sp);
       const bd=document.createElement("span");bd.className="badge "+(l.error?"error":"done");bd.textContent=l.error?t("jobError"):t("jobDone");rr.append(x,bd);box.append(rr)}}
   if(!jobs.length&&!w.watching){const e=document.createElement("p");e.className="empty";e.textContent=t("queueEmpty");box.append(e)}
@@ -388,7 +393,7 @@ const pollJobs=tick;
 /* ---- watch folder ---- */
 async function watchStatus(){const r=await api("watch_status");say("watch-status",r.watching?t("watching")+": "+r.watching:t("notWatching"))}
 $("watch-dir").oninput=()=>{$("btn-watch-start").disabled=!v("watch-dir")};
-$("btn-watch-start").onclick=async()=>{const d=v("watch-dir");await api("prefs_set",{watch_dir:d});const r=await api("watch_start",{folder:d});
+$("btn-watch-start").onclick=async()=>{const d=v("watch-dir");await api("prefs_set",{watch_dir:d});const r=await api("watch_start",{folder:d,auto:$("watch-auto").checked});
   if(errMsg(r)||r.success===false)say("watch-status",errMsg(r),true);else{await watchStatus();pollJobs()}};
 $("btn-watch-stop").onclick=async()=>{await api("watch_stop");await watchStatus()};
 

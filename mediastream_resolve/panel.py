@@ -1,7 +1,7 @@
 """Local web panel for the Mediastream tool (works in Resolve Free and Studio; also the
 window the Workflow Integration plugin shows).
 
-    venv/bin/python -m src.mediastream_panel [--port 8765] [--no-open]
+    python3 -m mediastream_resolve.panel [--port 8765] [--no-open]
 
 Loopback only. Every /api call needs the per-launch key embedded in the served page
 (a random website cannot POST to localhost without it). The API token lives in the macOS
@@ -102,13 +102,13 @@ class WatchState:
     def __init__(self, interval=5):
         self.interval, self.w, self.stop = interval, None, None
 
-    def start(self, folder, token):
-        from src.utils.mediastream import Watcher, token_from
+    def start(self, folder, token, auto=False):
+        from .client import Watcher, token_from
         if self.w:
             return {"success": False, "error": "already watching " + self.w.folder}
         if not os.path.isdir(folder or ""):
             return {"success": False, "error": "folder not found"}
-        self.w, self.stop = Watcher(folder, token_from(token)), threading.Event()
+        self.w, self.stop = Watcher(folder, token_from(token), auto=bool(auto)), threading.Event()
 
         def loop(w, stop):
             while not stop.wait(self.interval):
@@ -127,6 +127,8 @@ class WatchState:
 
     def status(self):
         return {"success": True, "watching": self.w.folder if self.w else None,
+                "auto": bool(self.w and self.w.auto),
+                "pending": list(self.w.pending) if self.w else [],
                 "log": self.w.log[-20:] if self.w else []}
 
 
@@ -163,6 +165,8 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
             t = (params.get("token") or "").strip()
             if not t:
                 return {"error": "empty token"}
+            if any(c.isspace() or not c.isprintable() for c in t):
+                return {"error": "token has spaces or control characters"}  # also guards `security -i`
             kc.save(t)
             return {"saved": True}
         if action == "token_delete":
@@ -175,7 +179,17 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
         if action == "presets":
             return {"presets": list_presets()}
         if action == "watch_start":
-            return watch.start(params.get("folder"), kc.load())
+            return watch.start(params.get("folder"), kc.load(), params.get("auto"))
+        if action in ("watch_approve", "watch_dismiss"):
+            if not watch.w:
+                return {"error": "not watching"}
+            name = os.path.basename(params.get("file") or "")  # a name inside the folder, never a path
+            if action == "watch_dismiss":
+                return watch.w.dismiss(name)
+            if name not in watch.w.pending:
+                return {"error": "not pending: " + name}
+            threading.Thread(target=watch.w.approve, args=(name,), daemon=True).start()
+            return {"success": True}
         if action == "watch_stop":
             return watch.halt()
         if action == "watch_status":
@@ -241,12 +255,11 @@ def main():
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--no-open", action="store_true")
     a = ap.parse_args()
-    from src.server import mediastream, render  # heavy import; only when actually serving
-
-    def list_presets():
-        return (render("list_presets", {}) or {}).get("presets", [])
+    from .actions import make_mediastream
+    from .resolve import ScriptAdapter
+    resolve = ScriptAdapter()
     key = secrets.token_urlsafe(24)
-    srv = make_server(make_panel_call(mediastream, list_presets), key, a.port)
+    srv = make_server(make_panel_call(make_mediastream(resolve), resolve.presets), key, a.port)
     url = f"http://127.0.0.1:{srv.server_address[1]}/"
     print(f"Mediastream panel: {url}  (Ctrl+C to stop)", flush=True)
     if not a.no_open:

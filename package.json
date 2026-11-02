@@ -35,6 +35,7 @@
   "files": [
     "bin/",
     "src/**/*.py",
+    "mediastream_resolve/**",
     "resolve-advanced/server/**/*.mjs",
     "resolve-advanced/server/**/*.py",
     "resolve-advanced/vendor/**",

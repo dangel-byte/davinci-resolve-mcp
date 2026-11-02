@@ -31,6 +31,44 @@ def token_from(token: Optional[str] = None) -> str:
     return t
 
 
+def check_path(path: str, exts) -> str:
+    """Resolve `path` and refuse anything that is not a plain media/subtitle file.
+
+    Every upload goes through here, so a prompt-injected or local caller cannot push
+    arbitrary files (keys, dotfiles) to Platform. Symlinks are resolved before checking.
+    """
+    real = os.path.realpath(os.path.expanduser(str(path or "")))
+    if not os.path.isfile(real):
+        raise MediastreamError(f"not a file: {path}")
+    if not real.lower().endswith(tuple(exts)):
+        raise MediastreamError(f"file type not allowed (need {'/'.join(exts)}): {os.path.basename(real)}")
+    if any(part.startswith(".") for part in real.split(os.sep)[1:]):
+        raise MediastreamError("hidden folders and files are not uploaded")
+    return real
+
+
+def _with_retry(fn, tries: int = 4):
+    """Retry transient failures (network errors, HTTP 5xx) with 1s/2s/4s backoff."""
+    for i in range(tries):
+        try:
+            return fn()
+        except (urllib.error.URLError, TimeoutError, ConnectionError):
+            err = None
+        except MediastreamError as e:
+            if not re.match(r"HTTP 5\d\d", str(e)):
+                raise
+            err = e
+        if i == tries - 1:
+            raise err or MediastreamError("network error after retries")
+        time.sleep(2 ** i)
+
+
+def _stem_key(name: str) -> str:
+    """Comparable form of a file/media name: no uuid prefix, no extension, alnum lowercase."""
+    name = re.sub(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}_", "", str(name or "").strip(), flags=re.I)
+    return re.sub(r"[^a-z0-9]", "", os.path.splitext(name)[0].lower())
+
+
 def _request(method: str, url: str, token: Optional[str] = None, data: Optional[bytes] = None,
              headers: Optional[Dict[str, str]] = None, timeout: int = TIMEOUT):
     h = dict(headers or {})
@@ -179,6 +217,7 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
            poll_seconds: int = 60) -> dict:
     """Resumable chunk upload. Returns {media_id, media} (media is None if not visible yet)."""
     t = token_from(token)
+    path = check_path(path, VIDEO_EXTS)
     name = os.path.basename(path)
     size = os.path.getsize(path)
     j = _json(_request("GET", _url("/api/media/upload", file_name=name, size=size, token=t), t))
@@ -188,15 +227,19 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
     with open(path, "rb") as f:
         for i in range(1, total + 1):
             chunk = f.read(CHUNK_BYTES)
-            if _request("GET", f"{srv}?resumableChunkNumber={i}").status != 204:
+            def has_chunk(i=i):
+                with _request("GET", f"{srv}?resumableChunkNumber={i}") as r:
+                    return r.status != 204
+            if _with_retry(has_chunk):
                 continue  # 200 = chunk already on server
             body, ctype = _multipart({"filename": name, "name": name}, "file", name, chunk,
                                      "application/octet-stream")
-            _request("POST", f"{srv}?resumableChunkNumber={i}", data=body,
-                     headers={"Content-Type": ctype}, timeout=300).read()
+            _with_retry(lambda i=i, body=body, ctype=ctype: _request(
+                "POST", f"{srv}?resumableChunkNumber={i}", data=body,
+                headers={"Content-Type": ctype}, timeout=300).read())
     # The upload session returns only the server URL, no media id: find the new media in
     # the recent admin list by filename stem (Platform stores it as "<uuid>_<stem>.mp4").
-    stem = re.sub(r"[^a-z0-9]", "", os.path.splitext(name)[0].lower())
+    stem = _stem_key(name)
     media = None
     deadline = time.time() + poll_seconds
     while not media and time.time() < deadline:
@@ -206,7 +249,7 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
         except MediastreamError:
             recent = []
         media = next((m for m in recent
-                      if stem in re.sub(r"[^a-z0-9]", "", str(m.get("title", "")).lower())
+                      if stem == _stem_key(m.get("title"))  # exact: reel1 must not match reel10
                       and str(m.get("date_created", "")) >= started), None)
         if not media:
             time.sleep(4)
@@ -221,6 +264,7 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
 def upload_subtitle(mid: str, srt_path: str, language: str = "es", language_name: str = "Spanish",
                     token: Optional[str] = None) -> Any:
     t = token_from(token)
+    srt_path = check_path(srt_path, (".srt",))
     with open(srt_path, "rb") as f:
         data = f.read()
     if data.startswith(b"\xef\xbb\xbf"):  # Platform rejects the UTF-8 BOM
@@ -252,10 +296,14 @@ class Watcher:
 
     A file is uploaded once its size is unchanged between two scans (export finished).
     Sidecar subtitles: `clip.mp4.srt` first, else `clip.srt`.
+    With auto=False (default) stable files wait in `pending` until approve(name); dismiss(name)
+    drops them. Nothing leaves the machine without a decision unless auto=True.
     """
 
-    def __init__(self, folder: str, token: Optional[str] = None, upload_fn=None, subtitle_fn=None):
-        self.folder, self.token = folder, token
+    def __init__(self, folder: str, token: Optional[str] = None, upload_fn=None, subtitle_fn=None,
+                 auto: bool = False):
+        self.folder, self.token, self.auto = folder, token, auto
+        self.pending: List[str] = []
         self.upload_fn, self.subtitle_fn = upload_fn or upload, subtitle_fn or upload_subtitle
         self.seen = {fp for fp in self._files()}
         self.sizes: Dict[str, int] = {}
@@ -282,16 +330,35 @@ class Watcher:
                 self.sizes[n] = size
                 continue
             self.seen.add(fp)
-            entry = {"file": n}
-            try:
-                entry["media_id"] = self.upload_fn(p, token=self.token)["media_id"]
-                srt = next((s for s in (p + ".srt", os.path.splitext(p)[0] + ".srt")
-                            if os.path.isfile(s)), None)
-                if srt and entry["media_id"]:
-                    self.subtitle_fn(entry["media_id"], srt, token=self.token)
-                    entry["subtitle"] = os.path.basename(srt)
-            except Exception as e:  # keep watching; report the failure
-                entry["error"] = f"{type(e).__name__}: {e}"
-            self.log.append(entry)
-            done.append(entry)
+            if self.auto:
+                done.append(self._publish(n))
+            elif n not in self.pending:
+                self.pending.append(n)
         return done
+
+    def _publish(self, n: str) -> dict:
+        p = os.path.join(self.folder, n)
+        entry = {"file": n}
+        try:
+            entry["media_id"] = self.upload_fn(p, token=self.token)["media_id"]
+            srt = next((s for s in (p + ".srt", os.path.splitext(p)[0] + ".srt")
+                        if os.path.isfile(s)), None)
+            if srt and entry["media_id"]:
+                self.subtitle_fn(entry["media_id"], srt, token=self.token)
+                entry["subtitle"] = os.path.basename(srt)
+        except Exception as e:  # keep watching; report the failure
+            entry["error"] = f"{type(e).__name__}: {e}"
+        self.log.append(entry)
+        return entry
+
+    def approve(self, name: str) -> dict:
+        """Upload a pending file. `name` must be one the scan queued (never a free path)."""
+        if name not in self.pending:
+            return {"error": "not pending: " + name}
+        self.pending.remove(name)
+        return self._publish(name)
+
+    def dismiss(self, name: str) -> dict:
+        if name in self.pending:
+            self.pending.remove(name)
+        return {"success": True}

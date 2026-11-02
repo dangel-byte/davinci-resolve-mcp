@@ -31943,6 +31943,45 @@ def _validate_dctl_source(source: str) -> Dict[str, Any]:
 _DCTL_VALID_CATEGORIES = ("lut", "aces_idt", "aces_odt")
 
 
+class _MediastreamResolve:
+    """Resolve adapter for the mediastream tool: reuses this server's connection and its
+    render safety checks (temp-dir target, blank-render verification)."""
+
+    def presets(self):
+        return (render("list_presets", {}) or {}).get("presets", [])
+
+    def import_media(self, paths):
+        from mediastream_resolve.resolve import ResolveError
+        _, _, mp, mp_err = _get_mp()
+        if mp_err:
+            raise ResolveError(str(mp_err.get("error", {}).get("message", mp_err)), "NO_MEDIA_POOL")
+        return bool(mp.ImportMedia(list(paths)))
+
+    def render_current(self, job_args, timeout=3600):
+        from mediastream_resolve.resolve import ResolveError
+        job = render("prepare_render_job", job_args)
+        job_id = job.get("job_id")
+        if not job_id:
+            raise ResolveError("could not queue render job", "RENDER_JOB_FAILED")
+        if not render("start", {"job_ids": [job_id]}).get("success"):
+            raise ResolveError("render did not start", "RENDER_START_FAILED")
+        deadline = time.time() + float(timeout)
+        while time.time() < deadline:
+            st = render("get_job_status", {"job_id": job_id}) or {}
+            if _render_job_completed(st):
+                break
+            if st.get("Error"):
+                raise ResolveError(f"render failed: {st['Error']}", "RENDER_FAILED")
+            time.sleep(3)
+        else:
+            raise ResolveError("render timed out", "RENDER_TIMEOUT")
+        v = render("verify_output", {"job_id": job_id})
+        out = v.get("output_path")
+        if not (out and os.path.isfile(out) and v.get("verified", True) is not False):
+            raise ResolveError("render output failed verification; not uploading", "RENDER_UNVERIFIED")
+        return out
+
+
 @mcp.tool()
 @_guard_missing_params
 def mediastream(action: str, params: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -31965,78 +32004,12 @@ def mediastream(action: str, params: Optional[Dict[str, Any]] = None) -> Dict[st
           Platform"), waits for the job, verifies the file, uploads it, optional .srt.
           Pin a video preset with from_preset; otherwise the Deliver page state is inherited.
     """
-    from src.utils import mediastream as ms
-    p = _params(params)
-    tok = p.get("token")
-    try:
-        if action == "search":
-            items = ms.search(p.get("query", ""), int(p.get("limit", 20)), int(p.get("skip", 0)), tok)
-            return _ok(items=[{"id": ms.media_id(m), "title": m.get("title"),
-                               "embed": ms.embed_url(m), "thumb": ms.thumbnail_url(m),
-                               "duration": m.get("duration")} for m in items])
-        if action == "embed":
-            m = ms.get(p["media_id"], token=tok)
-            return _ok(embed=ms.embed_url(m or {}))
-        if action == "download":
-            if not p.get("media_id"):
-                return _err("download requires media_id")
-            dest = p.get("dest_dir") or os.path.join(tempfile.gettempdir(), "mediastream")
-            path = ms.download(p["media_id"], dest, token=tok)
-            imported = None
-            if _coerce_bool(p.get("import", True)):
-                _, _, mp, mp_err = _get_mp()
-                if mp_err:
-                    return _ok(path=path, imported=False, import_error=mp_err)
-                imported = bool(mp.ImportMedia([path]))
-            return _ok(path=path, imported=imported)
-        if action == "upload":
-            if not p.get("path"):
-                return _err("upload requires path")
-            r = ms.upload(p["path"], p.get("title"), tok)
-            return _ok(media_id=r["media_id"], found=bool(r["media"]))
-        if action == "export_upload":
-            if not p.get("target_dir"):
-                return _err("export_upload requires target_dir")
-            job_args = {k: p[k] for k in ("target_dir", "from_preset", "format", "codec",
-                                          "settings", "custom_name") if p.get(k)}
-            job = render("prepare_render_job", job_args)
-            job_id = job.get("job_id")
-            if not job_id:
-                return _err("could not queue render job", code="RENDER_JOB_FAILED", state=job)
-            if not render("start", {"job_ids": [job_id]}).get("success"):
-                return _err("render did not start", code="RENDER_START_FAILED")
-            deadline = time.time() + float(p.get("timeout", 3600))
-            while time.time() < deadline:
-                st = render("get_job_status", {"job_id": job_id}) or {}
-                if _render_job_completed(st):
-                    break
-                if st.get("Error"):
-                    return _err(f"render failed: {st['Error']}", code="RENDER_FAILED")
-                time.sleep(3)
-            else:
-                return _err("render timed out", code="RENDER_TIMEOUT")
-            v = render("verify_output", {"job_id": job_id})
-            out = v.get("output_path")
-            if not (out and os.path.isfile(out) and v.get("verified", True) is not False):
-                return _err("render output failed verification; not uploading",
-                            code="RENDER_UNVERIFIED", state=v)
-            r = ms.upload(out, p.get("title"), tok)
-            res = {"output_path": out, "media_id": r["media_id"], "found": bool(r["media"])}
-            if p.get("srt_path") and r["media_id"]:
-                res["subtitle"] = ms.upload_subtitle(r["media_id"], p["srt_path"], token=tok)
-            return _ok(**res)
-        if action == "subtitle":
-            for k in ("media_id", "srt_path"):
-                if not p.get(k):
-                    return _err(f"subtitle requires {k}")
-            return _ok(result=ms.upload_subtitle(p["media_id"], p["srt_path"],
-                                                 p.get("language", "es"),
-                                                 p.get("language_name", "Spanish"), tok))
-    except ms.MediastreamError as exc:
-        return _err(str(exc), code="MEDIASTREAM_ERROR")
-    except KeyError as exc:
-        return _err(f"{action} requires {exc.args[0]}")
-    return _unknown(action, ["search", "download", "upload", "subtitle", "embed", "export_upload"])
+    from mediastream_resolve.actions import make_mediastream
+    res = make_mediastream(_MediastreamResolve())(action, _params(params))
+    if isinstance(res.get("error"), dict) and res["error"].get("code") == "UNKNOWN_ACTION":
+        from mediastream_resolve.actions import ACTIONS
+        return _unknown(action, ACTIONS)
+    return res
 
 
 @mcp.tool()

@@ -1,6 +1,6 @@
 """Offline checks for the Mediastream client's pure helpers (no network)."""
 import unittest
-from src.utils import mediastream as ms
+from mediastream_resolve import client as ms
 
 
 class MediastreamHelpers(unittest.TestCase):
@@ -29,7 +29,7 @@ if __name__ == "__main__":
 class PanelAuth(unittest.TestCase):
     def test_key_and_host_required(self):
         import json, threading, urllib.error, urllib.request
-        from src.mediastream_panel import make_server
+        from mediastream_resolve.panel import make_server
         srv = make_server(lambda a, p: {"echo": a, "tok": p.get("token")}, "k", 0)
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         url = f"http://127.0.0.1:{srv.server_address[1]}/api"
@@ -45,6 +45,43 @@ class PanelAuth(unittest.TestCase):
         srv.shutdown()
 
 
+class UploadSafety(unittest.TestCase):
+    def test_check_path_allowlist(self):
+        import os, tempfile
+        d = tempfile.mkdtemp()
+        ok = os.path.join(d, "a.mp4"); open(ok, "wb").write(b"x")
+        key = os.path.join(d, "id_rsa"); open(key, "wb").write(b"x")
+        link = os.path.join(d, "l.mp4"); os.symlink(key, link)
+        hid = os.path.join(d, ".h"); os.mkdir(hid); open(os.path.join(hid, "b.mp4"), "wb").write(b"x")
+        self.assertEqual(ms.check_path(ok, ms.VIDEO_EXTS), os.path.realpath(ok))
+        for bad in (key, link, os.path.join(hid, "b.mp4"), d, "/nope.mp4"):
+            with self.assertRaises(ms.MediastreamError):
+                ms.check_path(bad, ms.VIDEO_EXTS)
+        with self.assertRaises(ms.MediastreamError):
+            ms.check_path(ok, (".srt",))
+
+    def test_stem_key_is_exact(self):
+        u = "0b9f1a2c-1111-2222-3333-444455556666_"
+        self.assertEqual(ms._stem_key(u + "Reel 1.mp4"), ms._stem_key("reel1.mov"))
+        self.assertNotEqual(ms._stem_key(u + "reel10.mp4"), ms._stem_key("reel1.mp4"))
+
+    def test_retry_only_transient(self):
+        import urllib.error
+        n = []
+        def flaky():
+            n.append(1)
+            if len(n) < 3:
+                raise ms.MediastreamError("HTTP 503 GET /x: busy")
+            return "ok"
+        orig, ms.time.sleep = ms.time.sleep, lambda s: None
+        try:
+            self.assertEqual(ms._with_retry(flaky), "ok")
+            with self.assertRaises(ms.MediastreamError):
+                ms._with_retry(lambda: (_ for _ in ()).throw(ms.MediastreamError("HTTP 403 GET /x")))
+        finally:
+            ms.time.sleep = orig
+
+
 class WatcherScan(unittest.TestCase):
     def test_new_stable_file_uploads_once_with_srt(self):
         import os, tempfile
@@ -52,7 +89,7 @@ class WatcherScan(unittest.TestCase):
         open(os.path.join(d, "old.mp4"), "wb").write(b"x")
         calls = []
         w = ms.Watcher(d, "t", lambda p, token=None: calls.append(p) or {"media_id": "m1"},
-                       lambda mid, srt, token=None: calls.append(srt))
+                       lambda mid, srt, token=None: calls.append(srt), auto=True)
         new = os.path.join(d, "new.mp4")
         open(new, "wb").write(b"abc")
         open(new + ".srt", "w").write("1")
@@ -61,12 +98,27 @@ class WatcherScan(unittest.TestCase):
         self.assertEqual(w.scan(), [])        # never twice
         self.assertEqual(calls, [new, new + ".srt"])  # old.mp4 was baseline
 
+    def test_default_waits_for_approval(self):
+        import os, tempfile
+        d = tempfile.mkdtemp()
+        calls = []
+        w = ms.Watcher(d, "t", lambda p, token=None: calls.append(p) or {"media_id": "m1"},
+                       lambda *a, **k: None)
+        open(os.path.join(d, "a.mp4"), "wb").write(b"abc")
+        open(os.path.join(d, "b.mp4"), "wb").write(b"abc")
+        w.scan(); w.scan(); w.scan()
+        self.assertEqual((calls, w.pending), ([], ["a.mp4", "b.mp4"]))  # nothing uploaded
+        self.assertIn("error", w.approve("../etc/passwd"))              # only queued names
+        self.assertEqual(w.approve("a.mp4")["media_id"], "m1")
+        w.dismiss("b.mp4")
+        self.assertEqual((calls, w.pending), ([os.path.join(d, "a.mp4")], []))
+
 
 
 
 class PanelCall(unittest.TestCase):
     def _call(self):
-        from src.mediastream_panel import make_panel_call
+        from mediastream_resolve.panel import make_panel_call
 
         class KC:  # in-memory keychain stand-in
             tok = None
@@ -106,7 +158,7 @@ class PanelCall(unittest.TestCase):
 class ExportGuard(unittest.TestCase):
     def test_second_export_refused_while_first_runs(self):
         import threading
-        from src.mediastream_panel import make_panel_call
+        from mediastream_resolve.panel import make_panel_call
         gate = threading.Event()
 
         class KC:
