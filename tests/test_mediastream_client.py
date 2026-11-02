@@ -101,3 +101,19 @@ class PanelCall(unittest.TestCase):
             time.sleep(0.05)
         self.assertEqual((jobs[0]["id"], jobs[0]["status"]), (jid, "done"))
         self.assertEqual(call("presets", {}), {"presets": ["P1"]})
+
+
+class ExportGuard(unittest.TestCase):
+    def test_second_export_refused_while_first_runs(self):
+        import threading
+        from src.mediastream_panel import make_panel_call
+        gate = threading.Event()
+
+        class KC:
+            def load(self): return "t"
+        call = make_panel_call(lambda a, p: gate.wait(5) or {"ok": 1}, lambda: [], KC())
+        first = call("job_start", {"action": "export_upload", "params": {}})
+        self.assertIn("job_id", first)
+        self.assertIn("error", call("job_start", {"action": "export_upload", "params": {}}))
+        self.assertIn("job_id", call("job_start", {"action": "upload", "params": {}}))  # other jobs fine
+        gate.set()

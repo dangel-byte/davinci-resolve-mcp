@@ -9,7 +9,7 @@
 <style>
 :root{
   --lime:#97D700; --lemon:#B3E837; --violet:#A572EB; --ink:#1A1A1A; --card:#252525; --red:#FC3737;
-  --text:#fff; --muted:rgba(255,255,255,.65); --faint:rgba(255,255,255,.42);
+  --text:#fff; --muted:rgba(255,255,255,.76); --faint:rgba(255,255,255,.62);
   --grad-cta:linear-gradient(45deg,#97D700,#B3E837);
   --focus:0 0 0 3px rgba(151,215,0,.38);
   --glow:0 0 20px rgba(142,101,216,.3); --glow-hover:0 0 24px rgba(142,101,216,.45);
@@ -22,7 +22,7 @@ html,body{margin:0;height:100%}
 body{background:var(--ink) radial-gradient(circle,rgba(151,215,0,.06) 3.248px,transparent 3.248px) 0 0/64.785px 64.014px;
   color:var(--text);font:14px/1.5 var(--body);-webkit-font-smoothing:antialiased}
 svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-.wrap{max-width:760px;margin:0 auto;padding:20px 20px 48px}
+.wrap{max-width:760px;margin:0 auto;padding:20px 20px 88px}
 header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:20px}
 header .logo{width:150px;height:auto;display:block}
 nav{display:flex;gap:8px;margin-bottom:20px}
@@ -30,8 +30,7 @@ h2{font:800 20px/1.4 var(--display);margin:0 0 4px}
 .eyebrow{font:700 12px/1 var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--lime);margin:0 0 8px}
 .lead{color:var(--muted);margin:0 0 16px}
 .hint{color:var(--faint);font-size:12.5px;margin:4px 0 12px}
-.card{background:var(--card);border-radius:var(--r-card);padding:24px;margin-bottom:18px;box-shadow:var(--glow);transition:box-shadow .2s}
-.card:hover{box-shadow:var(--glow-hover)}
+.card{background:var(--card);border-radius:var(--r-card);padding:24px;margin-bottom:18px;box-shadow:var(--glow)}
 label.f{display:block;font:700 11px/1 var(--display);margin:14px 0 6px 5px;color:rgba(255,255,255,.8)}
 input,select{width:100%;height:46px;background:var(--ink);color:var(--text);border:2px solid rgba(255,255,255,.14);
   border-radius:var(--r-card);padding:10px 16px;font:15px var(--body);outline:none}
@@ -41,14 +40,14 @@ select option{background:var(--ink)}
 .row{display:flex;gap:10px;align-items:center}
 .row>input{flex:1}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 24px;border:2px solid transparent;
-  border-radius:var(--r-pill);font:700 14px var(--display);cursor:pointer;transition:transform .25s ease-in;white-space:nowrap}
-.btn:hover{transform:translateY(-5px)}
+  border-radius:var(--r-pill);font:700 14px var(--display);cursor:pointer;transition:filter .15s;white-space:nowrap}
+.btn:hover{filter:brightness(1.1)}
 .btn:focus-visible{box-shadow:var(--focus);outline:none}
 .btn.primary{background:var(--grad-cta);color:var(--ink)}
 .btn.secondary{background:var(--text);color:var(--ink)}
 .btn.outline{background:transparent;color:var(--text);border-color:rgba(255,255,255,.4)}
 .btn.sm{height:36px;padding:0 16px;font-size:13px}
-.btn[disabled]{background:#e7e7e7;color:#aaa;transform:none;cursor:default}
+.btn[disabled]{background:#3a3a3a;color:#8a8a8a;filter:none;cursor:default}
 .ib{width:40px;height:40px;padding:0;border-radius:50%;border:2px solid rgba(255,255,255,.3);background:transparent;color:var(--text);
   display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .ib:hover{border-color:var(--lime);color:var(--lime)}
@@ -79,7 +78,19 @@ select option{background:var(--ink)}
 pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;max-height:240px;font-size:12px;color:var(--muted);white-space:pre-wrap;word-break:break-all}
 .pill-actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
 [hidden]{display:none!important}
-@media (prefers-reduced-motion:reduce){.btn{transition:none}.btn:hover{transform:none}}
+.cnt{margin-left:6px;background:var(--ink);color:var(--lime);border-radius:var(--r-pill);padding:1px 8px;font-size:11px}
+.tab[aria-selected=true] .cnt{background:var(--ink)}
+.strip{position:fixed;left:0;right:0;bottom:0;background:#141414;border-top:1px solid rgba(255,255,255,.1);padding:10px 20px;
+  display:flex;align-items:center;gap:16px;font-size:13px;z-index:5}
+.strip .in{max-width:720px;margin:0 auto;width:100%;display:flex;align-items:center;gap:16px}
+.strip button{background:none;border:0;color:inherit;font:inherit;cursor:pointer;display:flex;align-items:center;gap:8px;padding:4px 0}
+.strip button:focus-visible{box-shadow:var(--focus);outline:none;border-radius:8px}
+.dot{width:9px;height:9px;border-radius:50%;background:#666;flex:none}
+.dot.on{background:var(--lime);box-shadow:0 0 8px rgba(151,215,0,.7)}
+.dot.busy{background:var(--violet);box-shadow:0 0 8px rgba(165,114,235,.7)}
+.strip .msg{flex:1;text-align:right;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.strip .msg.err{color:#ff8a8a}
+.btn.confirm{background:var(--red);color:#fff;border-color:transparent}
 </style>
 </head>
 <body>
@@ -124,10 +135,15 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
       <label class="f" for="watch-dir" data-t="folder"></label>
       <input id="watch-dir" data-ph="folderPh">
       <div class="pill-actions">
-        <button class="btn primary sm" id="btn-watch-start" data-t="watchStart"></button>
+        <button class="btn primary sm" id="btn-watch-start" data-t="watchStart" disabled></button>
         <button class="btn outline sm" id="btn-watch-stop" data-t="watchStop"></button>
       </div>
       <div class="toast" id="watch-status"></div>
+    </div>
+    <div class="card">
+      <p class="eyebrow" data-t="logTitle"></p>
+      <label class="chk" style="margin-top:0"><input type="checkbox" id="show-log"><span data-t="showLog"></span></label>
+      <pre id="log" hidden style="margin-top:12px"></pre>
     </div>
     <div class="pill-actions"><button class="btn secondary" id="btn-cfg-done" data-t="done"></button></div>
   </section>
@@ -135,7 +151,7 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
   <div id="app" hidden>
     <nav role="tablist">
       <button class="btn sm tab" role="tab" id="tab-media" aria-selected="true" data-tab="media" data-t="tabMedia"></button>
-      <button class="btn sm tab" role="tab" id="tab-upload" aria-selected="false" data-tab="upload" data-t="tabUpload"></button>
+      <button class="btn sm tab" role="tab" id="tab-upload" aria-selected="false" data-tab="upload"><span data-t="tabUpload"></span><span class="cnt" id="up-count" hidden></span></button>
     </nav>
 
     <section id="panel-media">
@@ -183,8 +199,11 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
       </div>
     </section>
 
-    <label class="chk"><input type="checkbox" id="show-log"><span data-t="showLog"></span></label>
-    <pre id="log" hidden></pre>
+    <div class="strip" id="strip" role="status" aria-live="polite"><div class="in">
+      <button id="strip-watch" type="button"><span class="dot" id="strip-dot"></span><span id="strip-watch-txt"></span></button>
+      <button id="strip-jobs" type="button" hidden><span class="dot busy"></span><span id="strip-jobs-txt"></span></button>
+      <span class="msg" id="strip-msg"></span>
+    </div></div>
   </div>
 </div>
 
@@ -192,15 +211,15 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
 const KEY="__KEY__";
 const $=id=>document.getElementById(id), v=id=>$(id).value.trim();
 const T={
- es:{config:"Configuración",language:"Idioma",token:"API token",tokenPh:"Pega tu API token de Platform",tokenSavedPh:"Nuevo token (queda guardado en el llavero)",
+ es:{logTitle:"Registro",confirmDel:"¿Borrar?",watchOn:"Vigilando",watchOff:"Sin vigilar",jobsN:"en curso",importing:"En curso",imported:"Importado",retry:"Reintentar",exportRunning:"Ya hay una exportación en curso.",config:"Configuración",language:"Idioma",token:"API token",tokenPh:"Pega tu API token de Platform",tokenSavedPh:"Nuevo token (queda guardado en el llavero)",
   onbEyebrow:"Primer uso",onbTitle:"Conecta tu cuenta",onbLead:"Pega el API token de Mediastream Platform. Se guarda en el llavero de macOS y nunca se muestra de nuevo.",onbSave:"Guardar y continuar",
   save:"Guardar",delete:"Borrar",done:"Listo",watchTitle:"Carpeta vigilada",watchHint:"Sube los videos nuevos que aparezcan en la carpeta, con su .srt hermano si existe.",folder:"Carpeta",folderPh:"/ruta/a/la/carpeta",watchStart:"Vigilar",watchStop:"Parar",
   tabMedia:"Media",tabUpload:"Subir",library:"Biblioteca",libraryHint:"Busca en tu catálogo de Platform e importa el video al Media Pool.",search:"Buscar",searchPh:"Buscar en Platform…",
   import:"Importar",embed:"Copiar embed",noResults:"Sin resultados.",page:"Página",
-  upTitle:"Timeline a Platform",upHint:"Renderiza el timeline abierto con un preset de Deliver y lo sube.",titleLabel:"Título en Platform",titlePh:"Opcional",outDir:"Carpeta de exportación",preset:"Preset de Deliver",srt:"Subtítulos .srt",srtPh:"Opcional: /ruta/archivo.srt",exportBtn:"Exportar y subir",
+  upTitle:"Timeline → Platform",upHint:"Renderiza el timeline abierto con un preset de Deliver y lo sube.",titleLabel:"Título en Platform",titlePh:"Opcional",outDir:"Carpeta de exportación",preset:"Preset (Deliver)",srt:"Subtítulos .srt",srtPh:"Opcional: /ruta/archivo.srt",exportBtn:"Exportar y subir",
   fileTitle:"Subir un archivo",filePh:"/ruta/archivo.mp4",upload:"Subir",queue:"Cola",queueEmpty:"Vacía.",clear:"Limpiar",showLog:"Ver registro",
   jobRunning:"En curso",jobDone:"Listo",jobError:"Error",saved:"Token guardado.",deleted:"Token borrado.",copied:"Embed copiado.",started:"Trabajo iniciado: míralo en la cola.",needFields:"Completa carpeta de exportación y preset.",needFile:"Indica la ruta del archivo.",watching:"Vigilando",notWatching:"Sin vigilar"},
- en:{config:"Settings",language:"Language",token:"API token",tokenPh:"Paste your Platform API token",tokenSavedPh:"New token (stored in the Keychain)",
+ en:{logTitle:"Log",confirmDel:"Delete?",watchOn:"Watching",watchOff:"Not watching",jobsN:"running",importing:"Running",imported:"Imported",retry:"Retry",exportRunning:"An export is already running.",config:"Settings",language:"Language",token:"API token",tokenPh:"Paste your Platform API token",tokenSavedPh:"New token (stored in the Keychain)",
   onbEyebrow:"First run",onbTitle:"Connect your account",onbLead:"Paste your Mediastream Platform API token. It is stored in the macOS Keychain and never shown again.",onbSave:"Save and continue",
   save:"Save",delete:"Delete",done:"Done",watchTitle:"Watch folder",watchHint:"Uploads new videos that appear in the folder, plus a sibling .srt if present.",folder:"Folder",folderPh:"/path/to/folder",watchStart:"Watch",watchStop:"Stop",
   tabMedia:"Media",tabUpload:"Upload",library:"Library",libraryHint:"Search your Platform catalog and import the video into the Media Pool.",search:"Search",searchPh:"Search Platform…",
@@ -208,7 +227,7 @@ const T={
   upTitle:"Timeline to Platform",upHint:"Renders the open timeline with a Deliver preset and uploads it.",titleLabel:"Title on Platform",titlePh:"Optional",outDir:"Export folder",preset:"Deliver preset",srt:"Subtitles .srt",srtPh:"Optional: /path/file.srt",exportBtn:"Export and upload",
   fileTitle:"Upload a file",filePh:"/path/file.mp4",upload:"Upload",queue:"Queue",queueEmpty:"Empty.",clear:"Clear",showLog:"Show log",
   jobRunning:"Running",jobDone:"Done",jobError:"Error",saved:"Token saved.",deleted:"Token deleted.",copied:"Embed copied.",started:"Job started: see the queue.",needFields:"Fill in export folder and preset.",needFile:"Enter the file path.",watching:"Watching",notWatching:"Not watching"},
- pt:{config:"Configuração",language:"Idioma",token:"API token",tokenPh:"Cole seu API token da Platform",tokenSavedPh:"Novo token (guardado no Keychain)",
+ pt:{logTitle:"Registro",confirmDel:"Apagar?",watchOn:"Monitorando",watchOff:"Sem monitorar",jobsN:"em andamento",importing:"Em andamento",imported:"Importado",retry:"Tentar de novo",exportRunning:"Já há uma exportação em andamento.",config:"Configuração",language:"Idioma",token:"API token",tokenPh:"Cole seu API token da Platform",tokenSavedPh:"Novo token (guardado no Keychain)",
   onbEyebrow:"Primeiro uso",onbTitle:"Conecte sua conta",onbLead:"Cole o API token da Mediastream Platform. Ele fica guardado no Keychain do macOS e nunca é exibido de novo.",onbSave:"Salvar e continuar",
   save:"Salvar",delete:"Apagar",done:"Pronto",watchTitle:"Pasta monitorada",watchHint:"Envia os vídeos novos que aparecerem na pasta, com o .srt irmão se existir.",folder:"Pasta",folderPh:"/caminho/da/pasta",watchStart:"Monitorar",watchStop:"Parar",
   tabMedia:"Mídia",tabUpload:"Enviar",library:"Biblioteca",libraryHint:"Busque no seu catálogo da Platform e importe o vídeo para o Media Pool.",search:"Buscar",searchPh:"Buscar na Platform…",
@@ -232,7 +251,17 @@ async function api(action,params){
   logEl.textContent=(new Date().toLocaleTimeString()+" "+action+" "+JSON.stringify(j).slice(0,400)+"\n")+logEl.textContent;
   return j;
 }
-const errMsg=j=>j&&j.error?(typeof j.error==="string"?j.error:(j.error.message||JSON.stringify(j.error))):"";
+const ERRS=[["render did not start",{es:"No se pudo iniciar el render.",en:"Render did not start.",pt:"Não foi possível iniciar o render."}],
+ ["could not queue render job",{es:"No se pudo crear el trabajo de render. ¿Hay un timeline abierto y el preset es válido?",en:"Could not queue the render job. Is a timeline open and the preset valid?",pt:"Não foi possível criar o job de render. Há uma timeline aberta e o preset é válido?"}],
+ ["render timed out",{es:"El render tardó demasiado.",en:"The render took too long.",pt:"O render demorou demais."}],
+ ["render failed",{es:"El render falló.",en:"The render failed.",pt:"O render falhou."}],
+ ["failed verification",{es:"El render no pasó la verificación; no se subió.",en:"The render failed verification; nothing was uploaded.",pt:"O render não passou na verificação; nada foi enviado."}],
+ ["missing API token",{es:"Falta el API token.",en:"Missing API token.",pt:"Falta o API token."}],
+ ["already running",{es:"Ya hay una exportación en curso.",en:"An export is already running.",pt:"Já há uma exportação em andamento."}]];
+function errLocal(m){const f=ERRS.find(e=>String(m).includes(e[0]));return f?f[1][lang]:m}
+let flashTimer=null;
+function flash(msg,bad){const e=$("strip-msg");e.textContent=msg;e.classList.toggle("err",!!bad);clearTimeout(flashTimer);flashTimer=setTimeout(()=>{e.textContent=""},5000)}
+const errMsg=j=>j&&j.error?errLocal(typeof j.error==="string"?j.error:(j.error.message||JSON.stringify(j.error))):"";
 function say(id,msg,bad){const e=$(id);e.textContent=msg;e.classList.toggle("err",!!bad)}
 function icon(paths){const s=document.createElementNS("http://www.w3.org/2000/svg","svg");s.setAttribute("class","i");s.setAttribute("viewBox","0 0 24 24");s.innerHTML=paths;return s}
 const ICON={dl:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/>',
@@ -249,7 +278,7 @@ document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
   if(b.dataset.tab==="upload") loadPresets();
 });
 $("btn-cfg").onclick=()=>show("config");
-$("btn-cfg-done").onclick=()=>show("app");
+$("btn-cfg-done").onclick=()=>{show("app");focusSearch()};
 document.querySelectorAll("[data-lang]").forEach(b=>b.onclick=async()=>{lang=b.dataset.lang;applyLang();await api("prefs_set",{lang})});
 $("show-log").onchange=e=>{logEl.hidden=!e.target.checked};
 
@@ -259,7 +288,13 @@ $("btn-onb").onclick=async()=>{
   if(r.saved){show("app");loadPresets()} else say("onb-err",errMsg(r)||"error",true);
 };
 $("btn-tok-save").onclick=async()=>{const r=await api("token_save",{token:v("tok-cfg")});$("tok-cfg").value="";say("cfg-toast",r.saved?t("saved"):errMsg(r),!r.saved)};
-$("btn-tok-del").onclick=async()=>{await api("token_delete");say("cfg-toast",t("deleted"));show("onboarding")};
+let delArmed=null;
+$("btn-tok-del").onclick=async()=>{
+  const b=$("btn-tok-del");
+  if(!delArmed){b.textContent=t("confirmDel");b.classList.add("confirm");delArmed=setTimeout(()=>{delArmed=null;b.textContent=t("delete");b.classList.remove("confirm")},3500);return}
+  clearTimeout(delArmed);delArmed=null;b.textContent=t("delete");b.classList.remove("confirm");
+  await api("token_delete");say("cfg-toast",t("deleted"));show("onboarding");
+};
 
 /* ---- media ---- */
 async function search(p){
@@ -277,7 +312,7 @@ async function search(p){
     const s=document.createElement("span");s.textContent=(m.duration?Math.floor(m.duration/60)+":"+String(m.duration%60).padStart(2,"0")+" · ":"")+m.id;
     tt.append(b,s);
     const imp=document.createElement("button");imp.className="btn secondary sm";imp.append(icon(ICON.dl),document.createTextNode(t("import")));
-    imp.onclick=()=>startJob("download",{media_id:m.id},m.title||m.id);
+    imp.onclick=async()=>{imp.disabled=true;imp.textContent=t("importing");const id=await startJob("download",{media_id:m.id},m.title||m.id);if(id)jobBtn[id]=imp;else{imp.disabled=false;imp.textContent="";imp.append(icon(ICON.dl),document.createTextNode(t("import")))}};
     const emb=document.createElement("button");emb.className="ib";emb.title=t("embed");emb.setAttribute("aria-label",t("embed"));emb.append(icon(ICON.cp));
     emb.onclick=async()=>{const e=await api("embed",{media_id:m.id});if(e.embed){await navigator.clipboard.writeText(e.embed);say("media-toast",t("copied"))}else say("media-toast",errMsg(e),true)};
     row.append(th,tt,imp,emb);box.append(row);
@@ -298,21 +333,23 @@ async function loadPresets(){
   for(const p of (r.presets||[])){const o=document.createElement("option");o.value=o.textContent=p;sel.append(o)}
   if(cur)sel.value=cur;
 }
+const jobBtn={};
 async function startJob(action,params,label){
   const r=await api("job_start",{action,params,label});
-  if(errMsg(r)){say("up-toast",errMsg(r),true);return}
-  say("up-toast",t("started")); pollJobs();
+  if(errMsg(r)){flash(errMsg(r),true);return null}
+  flash(t("started")); tick(); return r.job_id;
 }
 $("btn-export").onclick=async()=>{
   const dir=v("up-dir"), preset=$("up-preset").value;
   if(!dir||!preset){say("up-toast",t("needFields"),true);return}
+  if(exportBusy){flash(t("exportRunning"),true);return}
   await api("prefs_set",{export_dir:dir,preset});
   startJob("export_upload",{target_dir:dir,from_preset:preset,title:v("up-title"),srt_path:v("up-srt")},v("up-title")||preset);
 };
 $("btn-file").onclick=()=>{const p=v("file-path");if(!p){say("up-toast",t("needFile"),true);return}startJob("upload",{path:p},p.split("/").pop())};
 $("btn-clear").onclick=async()=>{(await api("jobs")).jobs.filter(j=>j.status!=="running").forEach(j=>cleared.add(j.id));renderJobs((await api("jobs")))};
 
-let pollTimer=null;
+let pollTimer=null, exportBusy=false;
 function renderJobs(r){
   const box=$("jobs"); box.textContent="";
   const jobs=(r.jobs||[]).filter(j=>!cleared.has(j.id));
@@ -324,23 +361,51 @@ function renderJobs(r){
   for(const j of jobs){
     const row=document.createElement("div");row.className="job";
     const tt=document.createElement("div");tt.className="tt";tt.textContent=j.label;
-    const sp=document.createElement("span");sp.textContent=j.message||"";tt.append(sp);
+    const sp=document.createElement("span");sp.textContent=errLocal(j.message||"");sp.title=sp.textContent;tt.append(sp);
     const bd=document.createElement("span");bd.className="badge "+j.status;bd.textContent=t(j.status==="running"?"jobRunning":j.status==="done"?"jobDone":"jobError");
     row.append(tt,bd);box.append(row);
   }
-  return jobs.some(j=>j.status==="running");
+  const running=jobs.filter(j=>j.status==="running");
+  exportBusy=running.some(j=>j.action==="export_upload");
+  $("btn-export").disabled=exportBusy;
+  const c=$("up-count");c.hidden=!running.length;c.textContent=running.length;
+  const dot=$("strip-dot");dot.classList.toggle("on",!!w.watching);
+  $("strip-watch-txt").textContent=w.watching?t("watchOn")+": "+w.watching.split("/").filter(Boolean).pop():t("watchOff");
+  $("strip-jobs").hidden=!running.length;$("strip-jobs-txt").textContent=running.length+" "+t("jobsN");
+  for(const j of (r.jobs||[])){const b=jobBtn[j.id];if(!b)continue;
+    if(j.status==="done"){b.disabled=true;b.textContent="";b.append(icon('<path d="M20 6 9 17l-5-5"/>'),document.createTextNode(t("imported")));delete jobBtn[j.id]}
+    else if(j.status==="error"){b.disabled=false;b.textContent="";b.append(icon(ICON.dl),document.createTextNode(t("retry")));flash(errLocal(j.message||t("jobError")),true);delete jobBtn[j.id]}}
+  return running.length>0;
 }
-async function pollJobs(){
+async function tick(){
   clearTimeout(pollTimer);
-  const r=await api("jobs"); const busy=renderJobs(r);
-  if(busy||(r.watch&&r.watch.watching))pollTimer=setTimeout(pollJobs,2500);
+  let busy=false;
+  try{busy=renderJobs(await api("jobs"))}catch(e){}
+  pollTimer=setTimeout(tick,busy?2000:6000);
 }
+const pollJobs=tick;
 
 /* ---- watch folder ---- */
 async function watchStatus(){const r=await api("watch_status");say("watch-status",r.watching?t("watching")+": "+r.watching:t("notWatching"))}
+$("watch-dir").oninput=()=>{$("btn-watch-start").disabled=!v("watch-dir")};
 $("btn-watch-start").onclick=async()=>{const d=v("watch-dir");await api("prefs_set",{watch_dir:d});const r=await api("watch_start",{folder:d});
   if(errMsg(r)||r.success===false)say("watch-status",errMsg(r),true);else{await watchStatus();pollJobs()}};
 $("btn-watch-stop").onclick=async()=>{await api("watch_stop");await watchStatus()};
+
+/* ---- strip, keyboard ---- */
+function goTab(name){document.getElementById("tab-"+name).click()}
+$("strip-watch").onclick=()=>{show("config");$("watch-dir").focus()};
+$("strip-jobs").onclick=()=>{show("app");goTab("upload")};
+function focusSearch(){if(!$("app").hidden){goTab("media");$("q").focus();$("q").select()}}
+document.addEventListener("keydown",e=>{
+  const mod=e.metaKey||e.ctrlKey;
+  if(mod&&e.key.toLowerCase()==="f"){e.preventDefault();show("app");focusSearch()}
+  else if(mod&&e.key===","){e.preventDefault();if(!$("onboarding").hidden)return;show("config")}
+  else if(mod&&e.key==="1"){e.preventDefault();show("app");goTab("media");$("q").focus()}
+  else if(mod&&e.key==="2"){e.preventDefault();show("app");goTab("upload")}
+  else if(e.key==="Escape"){if(!$("config").hidden){show("app");focusSearch()}}
+});
+$("up-title").onkeydown=e=>{if(e.key==="Enter")$("btn-export").click()};
 
 /* ---- boot ---- */
 (async()=>{
@@ -348,11 +413,11 @@ $("btn-watch-stop").onclick=async()=>{await api("watch_stop");await watchStatus(
   if(prefs.lang&&T[prefs.lang])lang=prefs.lang;
   applyLang();
   if(prefs.export_dir)$("up-dir").value=prefs.export_dir;
-  if(prefs.watch_dir)$("watch-dir").value=prefs.watch_dir;
+  if(prefs.watch_dir){$("watch-dir").value=prefs.watch_dir;$("btn-watch-start").disabled=false}
   watchStatus();
   const s=await api("token_status");
   show(s.saved?"app":"onboarding");
-  if(s.saved){pollJobs()}
+  if(s.saved){tick();$("q").focus()}
 })();
 </script>
 </body>

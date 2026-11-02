@@ -186,6 +186,10 @@ def make_panel_call(mediastream, list_presets, keychain=None, jobs_cls=Jobs):
             inner = params.get("action")
             if inner not in LONG_ACTIONS:
                 return {"error": "action not allowed as job"}
+            if inner == "export_upload" and any(
+                    j["status"] == "running" and j["action"] == "export_upload"
+                    for j in call.jobs.list()):
+                return {"error": "export already running"}  # no duplicate uploads
             return {"job_id": call.jobs.start(inner, with_token(params.get("params")),
                                               params.get("label") or inner)}
         return mediastream(action, with_token(params))
