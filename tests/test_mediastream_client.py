@@ -325,6 +325,17 @@ class PublishFlag(unittest.TestCase):
         self.assertEqual(open(part, "rb").read(), data)
         self.assertEqual(ev[-1], ("download", 10, 10))
 
+    def test_second_export_while_one_runs_is_blocked(self):
+        import threading
+        from mediastream_resolve.panel import make_panel_call
+        gate = threading.Event()
+        kc = mock.Mock(); kc.load.return_value = "t"
+        call = make_panel_call(lambda a, p: gate.wait(5) or {"success": True}, lambda: [], kc)
+        first = call("job_start", {"action": "export_upload", "params": {}})
+        self.assertIn("job_id", first)
+        self.assertEqual(call("job_start", {"action": "export_upload", "params": {}}), {"error": "export already running"})
+        gate.set()
+
     def test_download_network_failure_never_falls_back_to_another_rendition(self):
         import os, tempfile
         tried = []
