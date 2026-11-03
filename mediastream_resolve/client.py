@@ -5,6 +5,7 @@ download a rendition, upload a file (resumable chunks), attach an .srt, build
 the embed URL. The API token comes from the caller or MEDIASTREAM_API_TOKEN;
 it is never logged or persisted here.
 """
+import http.client
 import json
 import os
 import re
@@ -68,12 +69,16 @@ def check_path(path: str, exts) -> str:
     return real
 
 
-def _with_retry(fn, tries: int = 4):
-    """Retry transient failures (network errors, HTTP 5xx) with 1s/2s/4s backoff."""
+def _backoff(i: int) -> float:
+    return min(2.0 * 2 ** i, 30.0)  # 2, 4, 8, 16, 30 s: rides out a real network cut
+
+
+def _with_retry(fn, tries: int = 5):
+    """Retry transient failures (any network/socket error, a cut mid-body, HTTP 5xx) with backoff."""
     for i in range(tries):
         try:
             return fn()
-        except (urllib.error.URLError, TimeoutError, ConnectionError):
+        except (OSError, http.client.HTTPException):  # URLError, timeouts, resets, IncompleteRead
             err = None
         except MediastreamError as e:
             if not re.match(r"HTTP 5\d\d", str(e)):
@@ -81,7 +86,7 @@ def _with_retry(fn, tries: int = 4):
             err = e
         if i == tries - 1:
             raise err or MediastreamError("network error after retries")
-        time.sleep(2 ** i)
+        time.sleep(_backoff(i))
 
 
 def _stem_key(name: str) -> str:
@@ -183,6 +188,54 @@ def issue_access_token(mid: str, admin: bool = False, token: Optional[str] = Non
     return at
 
 
+def _fetch_resumable(url: str, token: str, part: str, dest_dir: str, progress=None, tries: int = 5) -> None:
+    """GET `url` into `part`, continuing with Range after a cut (or from an earlier .part).
+
+    Verifies the final size against what the server announced; a short body is resumed, not accepted."""
+    fails = 0
+    while True:
+        have = os.path.getsize(part) if os.path.exists(part) else 0
+        before = have
+        try:
+            with _request("GET", url, token, headers={"Range": f"bytes={have}-"} if have else None,
+                          timeout=300) as res:
+                resumed = have > 0 and res.status == 206
+                cl = int(res.headers.get("Content-Length") or 0)
+                if resumed:
+                    tail = (res.headers.get("Content-Range") or "").rsplit("/", 1)[-1]
+                    total = int(tail) if tail.isdigit() else have + cl
+                else:
+                    have, total = 0, cl  # no .part, or the server ignored Range: start over
+                if total:
+                    ensure_space(dest_dir, max(0, total - have), "download")
+                with open(part, "ab" if resumed else "wb") as f:
+                    while True:
+                        b = res.read(1 << 20)
+                        if not b:
+                            break
+                        f.write(b)
+                        have += len(b)
+                        if progress:
+                            progress("download", have, total)  # total 0 = unknown (no Content-Length)
+            if total and have > total:
+                os.remove(part)
+                raise MediastreamError(f"download size mismatch ({have} > {total} bytes)")
+            if total and have < total:
+                raise ConnectionError("body shorter than announced")  # resume below
+            return
+        except MediastreamError as e:
+            if before and str(e).startswith("HTTP 416"):  # .part no longer matches the file: restart
+                os.remove(part)
+                continue
+            raise
+        except (OSError, http.client.HTTPException):
+            now = os.path.getsize(part) if os.path.exists(part) else 0
+            fails = 0 if now > before else fails + 1  # progress made = the cut was not fatal
+            if fails >= tries:
+                raise
+            time.sleep(_backoff(fails))
+
+
 def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] = None, progress=None) -> str:
     """Download the original (else first) rendition into dest_dir; returns the file path."""
     t = token_from(token)
@@ -201,29 +254,19 @@ def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] 
     title = re.sub(r"[^\w.\- ]+", "_", str((media or {}).get("title") or mid)).strip(" .")[:80] or mid
     os.makedirs(dest_dir, exist_ok=True)
     path = os.path.join(dest_dir, f"{title}__{mid}.mp4")
-    part = path + ".part"
     last = None
-    for url in candidates:
+    for idx, url in enumerate(candidates):
+        # Only the original (idx 0) keeps a resumable .part; a fallback rendition is a different file.
+        part = path + (".part" if idx == 0 else f".part{idx}")
+        if idx and os.path.exists(part):
+            os.remove(part)
         try:
-            with _request("GET", url, t, timeout=300) as res:
-                size = int(res.headers.get("Content-Length") or 0)
-                if size:
-                    ensure_space(dest_dir, size, "download")
-                done = 0
-                with open(part, "wb") as f:
-                    while True:
-                        b = res.read(1 << 20)
-                        if not b:
-                            break
-                        f.write(b)
-                        done += len(b)
-                        if progress:
-                            progress("download", done, size)  # size 0 = unknown (no Content-Length)
+            _fetch_resumable(url, t, part, dest_dir, progress)
             break
         except DiskSpaceError:
             raise  # no point trying another rendition
-        except MediastreamError as e:
-            last = e
+        except (MediastreamError, OSError, http.client.HTTPException) as e:
+            last = e if isinstance(e, MediastreamError) else MediastreamError(f"{type(e).__name__}: {e}")
     else:
         raise last
     os.replace(part, path)
@@ -259,16 +302,21 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
     srv = re.sub(r"^http://", "https://", j["data"]["server"], flags=re.I)
     started = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() - 5))
     total = max(1, -(-size // CHUNK_BYTES))
+    fresh = False
     with open(path, "rb") as f:
         for i in range(1, total + 1):
-            chunk = f.read(CHUNK_BYTES)
             def has_chunk(i=i):
                 with _request("GET", f"{srv}?resumableChunkNumber={i}") as r:
                     return r.status != 204
-            if _with_retry(has_chunk):
+            # Chunks go up in order: if chunk 1 is not on the server this is a fresh upload and
+            # none of the others can be, so ask only for chunk 1 (saves one round trip per chunk).
+            if not fresh and _with_retry(has_chunk):
                 if progress:
                     progress("upload", min(i * CHUNK_BYTES, size), size)
                 continue  # 200 = chunk already on server
+            fresh = fresh or i == 1
+            f.seek((i - 1) * CHUNK_BYTES)
+            chunk = f.read(CHUNK_BYTES)
             body, ctype = _multipart({"filename": name, "name": name}, "file", name, chunk,
                                      "application/octet-stream")
             _with_retry(lambda i=i, body=body, ctype=ctype: _request(

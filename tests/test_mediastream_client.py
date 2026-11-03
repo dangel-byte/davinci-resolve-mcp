@@ -294,6 +294,59 @@ class PublishFlag(unittest.TestCase):
             ms.upload(f, None, "t", poll_seconds=1, progress=lambda *a: ev.append(a))
         self.assertEqual(ev, [("upload", 4, 6), ("upload", 6, 6), ("finalize", 0, 0)])
 
+    def test_download_resumes_with_range_after_a_cut_and_verifies_size(self):
+        import http.client, os, tempfile
+        data = b"0123456789"
+        calls = []
+
+        class Res:
+            def __init__(self, status, headers, chunks, boom=False):
+                self.status, self.headers, self.chunks, self.boom = status, headers, list(chunks), boom
+            def __enter__(self): return self
+            def __exit__(self, *a): return False
+            def read(self, n=-1):
+                if self.chunks:
+                    return self.chunks.pop(0)
+                if self.boom:
+                    raise http.client.IncompleteRead(b"")
+                return b""
+
+        def fake(method, url, token=None, data_=None, headers=None, timeout=60):
+            calls.append((headers or {}).get("Range"))
+            if len(calls) == 1:  # 5 bytes, then the connection drops
+                return Res(200, {"Content-Length": "10"}, [data[:5]], boom=True)
+            return Res(206, {"Content-Length": "5", "Content-Range": "bytes 5-9/10"}, [data[5:]])
+
+        part = os.path.join(tempfile.mkdtemp(), "f.mp4.part")
+        ev = []
+        with mock.patch.object(ms, "_request", fake), mock.patch.object(ms.time, "sleep"):
+            ms._fetch_resumable("u", "t", part, os.path.dirname(part), lambda *a: ev.append(a))
+        self.assertEqual(calls, [None, "bytes=5-"])
+        self.assertEqual(open(part, "rb").read(), data)
+        self.assertEqual(ev[-1], ("download", 10, 10))
+
+    def test_upload_asks_has_chunk_only_for_the_first_chunk_on_a_fresh_upload(self):
+        import os, tempfile
+        f = os.path.join(tempfile.mkdtemp(), "reel.mp4"); open(f, "wb").write(b"abcdefghij")
+        gets, posts = [], []
+
+        def fake(method, url, token=None, data=None, headers=None, timeout=60):
+            (gets if method == "GET" else posts).append(url)
+            class R:
+                status = 204
+                def read(self_): return b"{}"
+                def __enter__(self_): return self_
+                def __exit__(self_, *a): return False
+            return R()
+        media = {"_id": "m1", "title": "reel", "date_created": "9999"}
+        replies = [{"status": "OK", "data": {"server": "https://s/u"}}, {"status": "OK", "data": [media]}]
+        with mock.patch.object(ms, "CHUNK_BYTES", 4), mock.patch.object(ms, "_request", fake), \
+             mock.patch.object(ms, "_json", side_effect=replies):
+            ms.upload(f, None, "t", poll_seconds=1)
+        chunk_gets = [u for u in gets if "resumableChunkNumber" in u]
+        self.assertEqual(chunk_gets, ["https://s/u?resumableChunkNumber=1"])
+        self.assertEqual(len(posts), 3)
+
     def test_upload_sets_is_published_only_with_publish(self):
         import os, tempfile
         f = os.path.join(tempfile.mkdtemp(), "reel.mp4"); open(f, "wb").write(b"abc")
