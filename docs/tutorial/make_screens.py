@@ -75,7 +75,7 @@ def make_call(state):
         if action == "presets":
             return {"presets": ["H.264 Master", "H.265 Master", "ProRes 422 HQ", "YouTube - 720p", "YouTube - 1080p"]}
         if action == "update_status":
-            return {"version": "0.1.0", "available": False}
+            return {"version": "1.1.3", "available": False}
         if action == "search":
             q = (params.get("query") or "").strip()
             return {"success": True, "items": MEDIA if q else []}
