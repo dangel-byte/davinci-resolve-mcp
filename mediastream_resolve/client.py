@@ -285,10 +285,18 @@ def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] 
         except DiskSpaceError:
             raise  # no point trying another rendition
         except (MediastreamError, OSError, http.client.HTTPException) as e:
-            last = e if isinstance(e, MediastreamError) else MediastreamError(f"{type(e).__name__}: {e}")
+            # Another rendition is only for a URL Platform refuses (HTTP 4xx). A network cut or 5xx must
+            # fail with the .part kept (a retry resumes it), never swap in a lower-quality file silently.
+            if not (isinstance(e, MediastreamError) and str(e).startswith("HTTP 4")):
+                raise MediastreamError(f"download interrupted ({type(e).__name__}: {e}); "
+                                       "partial file kept, retry resumes it") from e
+            last = e
     else:
         raise last
     os.replace(part, path)
+    for stale in (path + ".part", *(f"{path}.part{i}" for i in range(1, len(candidates)))):
+        if os.path.exists(stale):
+            os.remove(stale)  # leftovers of rendition fallbacks
     return path
 
 

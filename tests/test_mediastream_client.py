@@ -325,6 +325,22 @@ class PublishFlag(unittest.TestCase):
         self.assertEqual(open(part, "rb").read(), data)
         self.assertEqual(ev[-1], ("download", 10, 10))
 
+    def test_download_network_failure_never_falls_back_to_another_rendition(self):
+        import os, tempfile
+        tried = []
+
+        def fetch(url, token, part, dest, progress=None):
+            tried.append(url)
+            raise ConnectionError("cut")
+
+        media = {"title": "t", "meta": [{"is_original": False, "url": "https://mdstrm.com/low.mp4"}]}
+        with mock.patch.object(ms, "get", return_value=media), mock.patch.object(ms, "issue_access_token", return_value="a"), \
+             mock.patch.object(ms, "_fetch_resumable", fetch):
+            with self.assertRaises(ms.MediastreamError) as cm:
+                ms.download("m1", tempfile.mkdtemp(), token="t")
+        self.assertEqual(len(tried), 1)  # only the original URL, never the lower rendition
+        self.assertIn("retry resumes", str(cm.exception))
+
     def test_upload_asks_has_chunk_only_for_the_first_chunk_on_a_fresh_upload(self):
         import os, tempfile
         f = os.path.join(tempfile.mkdtemp(), "reel.mp4"); open(f, "wb").write(b"abcdefghij")

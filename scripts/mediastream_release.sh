@@ -21,6 +21,7 @@ python3 "$PU/docs/tutorial/build_pdf.py" guia-premiere.html "$KIT/Premiere-Pro/G
 # Kit: installers (old versions out) + texts
 rm -f "$KIT"/DaVinci-Resolve/Mediastream-Resolve-*.pkg "$KIT"/Premiere-Pro/*.ccx
 cp "dist/Mediastream-Resolve-$NEW.pkg" "$KIT/DaVinci-Resolve/"
+cp packaging/macos/uninstall.command "$KIT/DaVinci-Resolve/Desinstalar Mediastream.command"
 cp "$PU"/dist/*-"$NEW".ccx "$KIT/Premiere-Pro/"
 sed -i '' "s/$OLD/$NEW/g" "$KIT/LEEME.txt" "$KIT/Correo-entrega-parcial.md" "$KIT/QA-Checklist.md"
 echo "listo $OLD -> $NEW. Falta: commit/push en este repo y en premiere-uxp."
