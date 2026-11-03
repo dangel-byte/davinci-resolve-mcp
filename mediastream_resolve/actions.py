@@ -28,6 +28,8 @@ def make_mediastream(resolve):
     def mediastream(action, params=None):
         p = dict(params or {})
         tok = p.get("token")
+        prog = p.pop("_progress", None)
+        prog = prog if callable(prog) else None  # set by the panel's job runner, never from JSON
         try:
             if action == "search":
                 items = ms.search(p.get("query", ""), int(p.get("limit", 20)), int(p.get("skip", 0)), tok)
@@ -40,7 +42,7 @@ def make_mediastream(resolve):
                 if not p.get("media_id"):
                     return _err("download requires media_id")
                 dest = p.get("dest_dir") or ms.default_media_dir()
-                path = ms.download(p["media_id"], dest, token=tok)
+                path = ms.download(p["media_id"], dest, token=tok, progress=prog)
                 if not _bool(p.get("import")):
                     return _ok(path=path, imported=None)
                 try:
@@ -50,7 +52,7 @@ def make_mediastream(resolve):
             if action == "upload":
                 if not p.get("path"):
                     return _err("upload requires path")
-                r = ms.upload(p["path"], p.get("title"), tok, publish=_bool(p.get("publish"), False))
+                r = ms.upload(p["path"], p.get("title"), tok, publish=_bool(p.get("publish"), False), progress=prog)
                 return _ok(media_id=r["media_id"], found=bool(r["media"]))
             if action == "export_upload":
                 if not p.get("target_dir"):
@@ -58,8 +60,9 @@ def make_mediastream(resolve):
                 ms.ensure_space(p["target_dir"], RENDER_MIN_FREE, "render")
                 job = {k: p[k] for k in ("target_dir", "from_preset", "format", "codec",
                                          "settings", "custom_name") if p.get(k)}
-                out = resolve.render_current(job, float(p.get("timeout", 3600)))
-                r = ms.upload(out, p.get("title"), tok, publish=_bool(p.get("publish"), False))
+                rkw = {"progress": prog} if prog and getattr(resolve, "supports_progress", False) else {}
+                out = resolve.render_current(job, float(p.get("timeout", 3600)), **rkw)
+                r = ms.upload(out, p.get("title"), tok, publish=_bool(p.get("publish"), False), progress=prog)
                 res = {"output_path": out, "media_id": r["media_id"], "found": bool(r["media"])}
                 if p.get("srt_path") and r["media_id"]:
                     res["subtitle"] = ms.upload_subtitle(r["media_id"], p["srt_path"], token=tok)

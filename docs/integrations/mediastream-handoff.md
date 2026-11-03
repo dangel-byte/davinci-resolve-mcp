@@ -4,11 +4,11 @@ Dos plugins que viven **dentro** de su programa (sin navegador, sin app aparte, 
 
 | | DaVinci Resolve | Premiere Pro |
 |---|---|---|
-| Versión | 0.1.0 | 1.1.0 |
+| Versión | 0.1.0 | 1.1.1 |
 | Tipo | Workflow Integration (solo **Studio**) | Panel UXP (`.ccx`, Premiere 25.6+) |
 | Repo | `dangel-byte/davinci-resolve-mcp`, rama `feat/mediastream-platform` (público) | `dangel-byte/premiere-uxp`, ramas `main` y `parity/resolve-hardening` (**privado**: hay que invitar a IT) |
 | Origen | Portado de `luchoahumada/premiere-uxp` | Copia de `luchoahumada/premiere-uxp` (remoto `upstream`, solo lectura) |
-| Instalador | `Mediastream-Resolve-0.1.0.pkg` (macOS arm64, sin firmar) | `com.mediastream.premiere-1.1.0.ccx` (sin firmar) |
+| Instalador | `Mediastream-Resolve-0.1.0.pkg` (macOS arm64, sin firmar) | `com.mediastream.premiere-1.1.1.ccx` (sin firmar) |
 | Guía | `Guia-Mediastream-DaVinci-Resolve.pdf` (12 págs.) | `Guia-Mediastream-Premiere-Pro.pdf` (11 págs.) |
 
 Kit con instaladores, PDF y capturas: `mediastream-plugins-kit/`. Fuentes de las guías: `docs/tutorial/` en cada repo (`build_pdf.py`). La tabla de paridad entre ambos está en `PARIDAD.md` del repo de Premiere.

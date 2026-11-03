@@ -282,6 +282,18 @@ class PublishFlag(unittest.TestCase):
             w.scan(); w.scan()
             self.assertEqual(seen, [expect])
 
+    def test_upload_reports_progress_per_chunk_then_finalize(self):
+        import os, tempfile
+        f = os.path.join(tempfile.mkdtemp(), "reel.mp4"); open(f, "wb").write(b"abcdef")
+        ev = []
+        media = {"_id": "m1", "title": "reel", "date_created": "9999"}
+        replies = [{"status": "OK", "data": {"server": "https://s/u"}}, {"status": "OK", "data": [media]}]
+        with mock.patch.object(ms, "CHUNK_BYTES", 4), mock.patch.object(ms, "_request", mock.MagicMock()), \
+             mock.patch.object(ms, "_json", side_effect=replies), \
+             mock.patch.object(ms, "_with_retry", lambda fn, tries=4: True):
+            ms.upload(f, None, "t", poll_seconds=1, progress=lambda *a: ev.append(a))
+        self.assertEqual(ev, [("upload", 4, 6), ("upload", 6, 6), ("finalize", 0, 0)])
+
     def test_upload_sets_is_published_only_with_publish(self):
         import os, tempfile
         f = os.path.join(tempfile.mkdtemp(), "reel.mp4"); open(f, "wb").write(b"abc")

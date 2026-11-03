@@ -146,14 +146,16 @@ class Jobs:
 
     def start(self, action, params, label):
         job = {"id": secrets.token_hex(4), "action": action, "label": label,
-               "status": "running", "started": time.time(), "result": None}
+               "status": "running", "started": time.time(), "result": None, "progress": None}
         with self.lock:
             self.items.append(job)
             del self.items[:-30]
 
         def run():
             try:
-                res = self.call(action, params)
+                def progress(phase, done, total):
+                    job["progress"] = {"phase": phase, "done": done, "total": total}
+                res = self.call(action, dict(params, _progress=progress))
                 err = res.get("error")
                 job["result"] = res
                 job["status"] = "error" if err else "done"

@@ -59,7 +59,9 @@ class ScriptAdapter:
             raise ResolveError("Failed to get MediaPool", "NO_MEDIA_POOL")
         return bool(mp.ImportMedia(list(paths)))
 
-    def render_current(self, job, timeout=3600):
+    supports_progress = True
+
+    def render_current(self, job, timeout=3600, progress=None):
         proj = self._project()
         if not proj.GetCurrentTimeline():
             raise ResolveError("No current timeline", "NO_CURRENT_TIMELINE")
@@ -78,6 +80,8 @@ class ScriptAdapter:
         deadline = time.time() + float(timeout)
         while time.time() < deadline:
             st = proj.GetRenderJobStatus(job_id) or {}
+            if progress and isinstance(st.get("CompletionPercentage"), (int, float)):
+                progress("render", st["CompletionPercentage"], 100)
             if _completed(st):
                 break
             if st.get("Error"):

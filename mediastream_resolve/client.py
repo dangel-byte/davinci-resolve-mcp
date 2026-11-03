@@ -183,7 +183,7 @@ def issue_access_token(mid: str, admin: bool = False, token: Optional[str] = Non
     return at
 
 
-def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] = None) -> str:
+def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] = None, progress=None) -> str:
     """Download the original (else first) rendition into dest_dir; returns the file path."""
     t = token_from(token)
     media = get(mid, admin=admin, token=t)
@@ -209,12 +209,16 @@ def download(mid: str, dest_dir: str, admin: bool = False, token: Optional[str] 
                 size = int(res.headers.get("Content-Length") or 0)
                 if size:
                     ensure_space(dest_dir, size, "download")
+                done = 0
                 with open(part, "wb") as f:
                     while True:
                         b = res.read(1 << 20)
                         if not b:
                             break
                         f.write(b)
+                        done += len(b)
+                        if progress:
+                            progress("download", done, size)  # size 0 = unknown (no Content-Length)
             break
         except DiskSpaceError:
             raise  # no point trying another rendition
@@ -242,7 +246,7 @@ def embed_url(media: dict) -> Optional[str]:
 
 
 def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
-           poll_seconds: int = 60, publish: bool = False) -> dict:
+           poll_seconds: int = 60, publish: bool = False, progress=None) -> dict:
     """Resumable chunk upload. Returns {media_id, media} (media is None if not visible yet).
 
     publish=True also sets is_published (the Premiere panel's "publish" switch); the default
@@ -262,16 +266,22 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
                 with _request("GET", f"{srv}?resumableChunkNumber={i}") as r:
                     return r.status != 204
             if _with_retry(has_chunk):
+                if progress:
+                    progress("upload", min(i * CHUNK_BYTES, size), size)
                 continue  # 200 = chunk already on server
             body, ctype = _multipart({"filename": name, "name": name}, "file", name, chunk,
                                      "application/octet-stream")
             _with_retry(lambda i=i, body=body, ctype=ctype: _request(
                 "POST", f"{srv}?resumableChunkNumber={i}", data=body,
                 headers={"Content-Type": ctype}, timeout=300).read())
+            if progress:
+                progress("upload", min(i * CHUNK_BYTES, size), size)
     # The upload session returns only the server URL, no media id: find the new media in
     # the recent admin list by filename stem (Platform stores it as "<uuid>_<stem>.mp4").
     stem = _stem_key(name)
     media = None
+    if progress:
+        progress("finalize", 0, 0)  # bytes are all sent; waiting for Platform to list the media
     deadline = time.time() + poll_seconds
     while not media and time.time() < deadline:
         try:

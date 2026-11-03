@@ -69,6 +69,11 @@ select option{background:var(--ink)}
 .job{display:flex;gap:12px;align-items:center;padding:10px 0;border-top:1px solid rgba(255,255,255,.08)}
 .job:first-child{border-top:0}
 .job .tt{flex:1;min-width:0;font-size:13px}
+.bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--lime);transition:width .4s}
+.bar.ind i{width:40%!important;animation:ind 1.2s ease-in-out infinite alternate}
+@keyframes ind{from{margin-left:0}to{margin-left:60%}}
+.pgtxt{display:block;font-size:12.5px;color:var(--faint);margin-top:4px}
 .job .tt span{display:block;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .empty{color:var(--faint)}
 .chk{display:flex;gap:10px;align-items:center;margin:14px 0 0;cursor:pointer}
@@ -225,7 +230,7 @@ const T={
   import:"Importar",embed:"Copiar embed",noResults:"Sin resultados.",page:"Página",
   upTitle:"Timeline → Platform",upHint:"Renderiza el timeline abierto con un preset de Deliver y lo sube.",titleLabel:"Título en Platform",titlePh:"Opcional",outDir:"Carpeta de exportación",preset:"Preset (Deliver)",srt:"Subtítulos .srt",srtPh:"Opcional: /ruta/archivo.srt",exportBtn:"Exportar y subir",
   fileTitle:"Subir un archivo",filePh:"/ruta/archivo.mp4",upload:"Subir",queue:"Cola",queueEmpty:"Vacía.",clear:"Limpiar",showLog:"Ver registro",
-  jobRunning:"En curso",jobDone:"Listo",jobError:"Error",saved:"Token guardado.",deleted:"Token borrado.",copied:"Embed copiado.",updAvail:"Hay una versión nueva:",updGet:"Descargar",diag:"Copiar diagnóstico",diagOk:"Diagnóstico copiado: pégalo en tu mensaje de soporte.",started:"Trabajo iniciado: míralo en la cola.",needFields:"Completa carpeta de exportación y preset.",needFile:"Indica la ruta del archivo.",watching:"Vigilando",notWatching:"Sin vigilar"},
+  jobRunning:"En curso",phDownload:"Descargando",phUpload:"Subiendo",phRender:"Renderizando",phFinalize:"Finalizando en Platform",jobDone:"Listo",jobError:"Error",saved:"Token guardado.",deleted:"Token borrado.",copied:"Embed copiado.",updAvail:"Hay una versión nueva:",updGet:"Descargar",diag:"Copiar diagnóstico",diagOk:"Diagnóstico copiado: pégalo en tu mensaje de soporte.",started:"Trabajo iniciado: míralo en la cola.",needFields:"Completa carpeta de exportación y preset.",needFile:"Indica la ruta del archivo.",watching:"Vigilando",notWatching:"Sin vigilar"},
  en:{logTitle:"Log",confirmDel:"Delete?",watchOn:"Watching",watchOff:"Not watching",jobsN:"running",importing:"Running",imported:"Imported",retry:"Retry",exportRunning:"An export is already running.",config:"Settings",language:"Language",token:"API token",tokenPh:"Paste your Platform API token",tokenSavedPh:"New token (stored in the Keychain)",
   onbEyebrow:"First run",onbTitle:"Connect your account",onbLead:"Paste your Mediastream Platform API token. It is stored in the macOS Keychain and never shown again.",onbSave:"Save and continue",
   save:"Save",delete:"Delete",done:"Done",watchTitle:"Watch folder",watchAuto:"Upload without asking",publishNow:"Publish on upload",dismiss:"Dismiss",watchHint:"Uploads new videos that appear in the folder, plus a sibling .srt if present.",folder:"Folder",folderPh:"/path/to/folder",watchStart:"Watch",watchStop:"Stop",
@@ -233,7 +238,7 @@ const T={
   import:"Import",embed:"Copy embed",noResults:"No results.",page:"Page",
   upTitle:"Timeline to Platform",upHint:"Renders the open timeline with a Deliver preset and uploads it.",titleLabel:"Title on Platform",titlePh:"Optional",outDir:"Export folder",preset:"Deliver preset",srt:"Subtitles .srt",srtPh:"Optional: /path/file.srt",exportBtn:"Export and upload",
   fileTitle:"Upload a file",filePh:"/path/file.mp4",upload:"Upload",queue:"Queue",queueEmpty:"Empty.",clear:"Clear",showLog:"Show log",
-  jobRunning:"Running",jobDone:"Done",jobError:"Error",saved:"Token saved.",deleted:"Token deleted.",copied:"Embed copied.",updAvail:"A new version is available:",updGet:"Download",diag:"Copy diagnostics",diagOk:"Diagnostics copied: paste it in your support message.",started:"Job started: see the queue.",needFields:"Fill in export folder and preset.",needFile:"Enter the file path.",watching:"Watching",notWatching:"Not watching"},
+  jobRunning:"Running",phDownload:"Downloading",phUpload:"Uploading",phRender:"Rendering",phFinalize:"Finishing on Platform",jobDone:"Done",jobError:"Error",saved:"Token saved.",deleted:"Token deleted.",copied:"Embed copied.",updAvail:"A new version is available:",updGet:"Download",diag:"Copy diagnostics",diagOk:"Diagnostics copied: paste it in your support message.",started:"Job started: see the queue.",needFields:"Fill in export folder and preset.",needFile:"Enter the file path.",watching:"Watching",notWatching:"Not watching"},
  pt:{logTitle:"Registro",confirmDel:"Apagar?",watchOn:"Monitorando",watchOff:"Sem monitorar",jobsN:"em andamento",importing:"Em andamento",imported:"Importado",retry:"Tentar de novo",exportRunning:"Já há uma exportação em andamento.",config:"Configuração",language:"Idioma",token:"API token",tokenPh:"Cole seu API token da Platform",tokenSavedPh:"Novo token (guardado no Keychain)",
   onbEyebrow:"Primeiro uso",onbTitle:"Conecte sua conta",onbLead:"Cole o API token da Mediastream Platform. Ele fica guardado no Keychain do macOS e nunca é exibido de novo.",onbSave:"Salvar e continuar",
   save:"Salvar",delete:"Apagar",done:"Pronto",watchTitle:"Pasta monitorada",watchAuto:"Enviar sem perguntar",publishNow:"Publicar ao enviar",dismiss:"Descartar",watchHint:"Envia os vídeos novos que aparecerem na pasta, com o .srt irmão se existir.",folder:"Pasta",folderPh:"/caminho/da/pasta",watchStart:"Monitorar",watchStop:"Parar",
@@ -241,7 +246,7 @@ const T={
   import:"Importar",embed:"Copiar embed",noResults:"Sem resultados.",page:"Página",
   upTitle:"Timeline para a Platform",upHint:"Renderiza a timeline aberta com um preset do Deliver e envia.",titleLabel:"Título na Platform",titlePh:"Opcional",outDir:"Pasta de exportação",preset:"Preset do Deliver",srt:"Legendas .srt",srtPh:"Opcional: /caminho/arquivo.srt",exportBtn:"Exportar e enviar",
   fileTitle:"Enviar um arquivo",filePh:"/caminho/arquivo.mp4",upload:"Enviar",queue:"Fila",queueEmpty:"Vazia.",clear:"Limpar",showLog:"Ver registro",
-  jobRunning:"Em andamento",jobDone:"Pronto",jobError:"Erro",saved:"Token salvo.",deleted:"Token apagado.",copied:"Embed copiado.",updAvail:"Há uma versão nova:",updGet:"Baixar",diag:"Copiar diagnóstico",diagOk:"Diagnóstico copiado: cole na sua mensagem de suporte.",started:"Trabalho iniciado: veja a fila.",needFields:"Preencha a pasta de exportação e o preset.",needFile:"Informe o caminho do arquivo.",watching:"Monitorando",notWatching:"Sem monitorar"}
+  jobRunning:"Em andamento",phDownload:"Baixando",phUpload:"Enviando",phRender:"Renderizando",phFinalize:"Finalizando na Platform",jobDone:"Pronto",jobError:"Erro",saved:"Token salvo.",deleted:"Token apagado.",copied:"Embed copiado.",updAvail:"Há uma versão nova:",updGet:"Baixar",diag:"Copiar diagnóstico",diagOk:"Diagnóstico copiado: cole na sua mensagem de suporte.",started:"Trabalho iniciado: veja a fila.",needFields:"Preencha a pasta de exportação e o preset.",needFile:"Informe o caminho do arquivo.",watching:"Monitorando",notWatching:"Sem monitorar"}
 };
 let lang="es", prefs={}, page=0, lastQuery="", cleared=new Set(), PAGE_SIZE=8;
 const t=k=>(T[lang][k]||T.es[k]||k);
@@ -362,7 +367,7 @@ $("btn-clear").onclick=async()=>{(await api("jobs")).jobs.filter(j=>j.status!=="
 let pollTimer=null, exportBusy=false;
 function renderJobs(r){
   const box=$("jobs"); box.textContent="";
-  const jobs=(r.jobs||[]).filter(j=>!cleared.has(j.id));
+  const jobs=(r.jobs||[]).filter(j=>!cleared.has(j.id)&&j.action!=="download");  // downloads report inside their result card
   const w=r.watch||{};
   if(w.watching){const row=document.createElement("div");row.className="job";const tt=document.createElement("div");tt.className="tt";tt.textContent=t("watching")+": "+w.watching;row.append(tt);box.append(row);
     for(const f of w.pending||[]){const rr=document.createElement("div");rr.className="job";const x=document.createElement("div");x.className="tt";x.textContent=f;
@@ -377,19 +382,35 @@ function renderJobs(r){
     const tt=document.createElement("div");tt.className="tt";tt.textContent=j.label;
     const sp=document.createElement("span");sp.textContent=errLocal(j.message||"");sp.title=sp.textContent;tt.append(sp);
     const bd=document.createElement("span");bd.className="badge "+j.status;bd.textContent=t(j.status==="running"?"jobRunning":j.status==="done"?"jobDone":"jobError");
-    row.append(tt,bd);box.append(row);
+    const run=j.status==="running";
+    const pg=run&&(j.progress||{phase:{download:"download",export_upload:"render"}[j.action]||"upload",done:0,total:0});
+    if(pg){const mb=n=>(n/1048576).toFixed(n>=1.05e8?0:1),pct=pg.total?Math.min(100,Math.round(100*pg.done/pg.total)):0;
+      sp.textContent=t("ph"+pg.phase[0].toUpperCase()+pg.phase.slice(1))+(pg.total?" "+pct+"%"+(pg.phase==="render"?"":" · "+mb(pg.done)+" / "+mb(pg.total)+" MB"):"");
+      const bar=document.createElement("div");bar.className="bar"+(pg.total?"":" ind");const fill=document.createElement("i");fill.style.width=pct+"%";bar.append(fill);tt.append(bar)}
+    if(run)row.append(tt);else row.append(tt,bd);  // running: the bar says it all; the pill is only for the final state
+    box.append(row);
   }
   const running=jobs.filter(j=>j.status==="running");
+  const allRunning=(r.jobs||[]).filter(j=>j.status==="running");
   exportBusy=running.some(j=>j.action==="export_upload");
   $("btn-export").disabled=exportBusy;
   const c=$("up-count");c.hidden=!running.length;c.textContent=running.length;
   const dot=$("strip-dot");dot.classList.toggle("on",!!w.watching);
   $("strip-watch-txt").textContent=w.watching?t("watchOn")+": "+w.watching.split("/").filter(Boolean).pop():t("watchOff");
-  $("strip-jobs").hidden=!running.length;$("strip-jobs-txt").textContent=running.length+" "+t("jobsN");
+  $("strip-jobs").hidden=!allRunning.length;$("strip-jobs-txt").textContent=allRunning.length+" "+t("jobsN");
   for(const j of (r.jobs||[])){const b=jobBtn[j.id];if(!b)continue;
+    const tt=b.parentNode.querySelector(".tt");let bar=tt.querySelector(".bar");
+    if(j.status==="running"){const pg=j.progress||{done:0,total:0},pct=pg.total?Math.min(100,Math.round(100*pg.done/pg.total)):0;
+      if(!bar){bar=document.createElement("div");bar.className="bar";bar.append(document.createElement("i"));tt.append(bar)}
+      const mb=n=>(n/1048576).toFixed(n>=1.05e8?0:1),exact=pg.total?100*pg.done/pg.total:0;
+      bar.classList.toggle("ind",!pg.total);bar.firstChild.style.width=Math.max(exact,pg.done?1:0)+"%";
+      let tx=tt.querySelector(".pgtxt");if(!tx){tx=document.createElement("small");tx.className="pgtxt";tt.append(tx)}
+      tx.textContent=pg.total?(exact<10?exact.toFixed(1):Math.round(exact))+"% · "+mb(pg.done)+" / "+mb(pg.total)+" MB":t("phDownload")+"…";
+      b.textContent=t("phDownload")+(pg.total?" "+(exact<10?exact.toFixed(1):Math.round(exact))+"%":"…");continue}
+    if(bar)bar.remove();const tx=tt.querySelector(".pgtxt");if(tx)tx.remove();
     if(j.status==="done"){b.disabled=true;b.textContent="";b.append(icon('<path d="M20 6 9 17l-5-5"/>'),document.createTextNode(t("imported")));delete jobBtn[j.id]}
     else if(j.status==="error"){b.disabled=false;b.textContent="";b.append(icon(ICON.dl),document.createTextNode(t("retry")));flash(errLocal(j.message||t("jobError")),true);delete jobBtn[j.id]}}
-  return running.length>0;
+  return allRunning.length>0;
 }
 async function tick(){
   clearTimeout(pollTimer);
@@ -409,7 +430,7 @@ $("btn-watch-stop").onclick=async()=>{await api("watch_stop");await watchStatus(
 /* ---- strip, keyboard ---- */
 function goTab(name){document.getElementById("tab-"+name).click()}
 $("strip-watch").onclick=()=>{show("config");$("watch-dir").focus()};
-$("strip-jobs").onclick=()=>{show("app");goTab("upload")};
+$("strip-jobs").onclick=async()=>{show("app");const r=await api("jobs");goTab((r.jobs||[]).some(j=>j.status==="running"&&j.action!=="download")?"upload":"media")};
 function focusSearch(){if(!$("app").hidden){goTab("media");$("q").focus();$("q").select()}}
 document.addEventListener("keydown",e=>{
   const mod=e.metaKey||e.ctrlKey;
