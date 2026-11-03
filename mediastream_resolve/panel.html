@@ -137,7 +137,7 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
       </div>
       <div class="toast" id="cfg-toast"></div>
     </div>
-    <div class="card">
+    <div class="card" hidden> <!-- watched folder frozen, hidden until a channel asks -->
       <p class="eyebrow" data-t="watchTitle"></p>
       <p class="hint" data-t="watchHint"></p>
       <label class="f" for="watch-dir" data-t="folder"></label>
@@ -212,7 +212,7 @@ pre{background:var(--ink);border-radius:var(--r-sm);padding:14px;overflow:auto;m
     </section>
 
     <div class="strip" id="strip" role="status" aria-live="polite"><div class="in">
-      <button id="strip-watch" type="button"><span class="dot" id="strip-dot"></span><span id="strip-watch-txt"></span></button>
+      <button id="strip-watch" type="button" hidden><span class="dot" id="strip-dot"></span><span id="strip-watch-txt"></span></button>
       <button id="strip-jobs" type="button" hidden><span class="dot busy"></span><span id="strip-jobs-txt"></span></button>
       <span class="msg" id="strip-msg"></span>
     </div></div>
