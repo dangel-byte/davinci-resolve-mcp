@@ -41,7 +41,7 @@ def make_mediastream(resolve):
             if action == "download":
                 if not p.get("media_id"):
                     return _err("download requires media_id")
-                dest = p.get("dest_dir") or ms.default_media_dir()
+                dest = ms.check_dest(p.get("dest_dir") or ms.default_media_dir())
                 path = ms.download(p["media_id"], dest, token=tok, progress=prog)
                 if not _bool(p.get("import")):
                     return _ok(path=path, imported=None)
@@ -57,6 +57,7 @@ def make_mediastream(resolve):
             if action == "export_upload":
                 if not p.get("target_dir"):
                     return _err("export_upload requires target_dir")
+                p["target_dir"] = ms.check_dest(p["target_dir"])
                 ms.ensure_space(p["target_dir"], RENDER_MIN_FREE, "render")
                 job = {k: p[k] for k in ("target_dir", "from_preset", "format", "codec",
                                          "settings", "custom_name") if p.get(k)}

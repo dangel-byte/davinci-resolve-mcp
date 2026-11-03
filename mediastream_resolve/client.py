@@ -44,6 +44,25 @@ def default_media_dir() -> str:
     return os.path.join(home, "Movies" if sys.platform == "darwin" else "Videos", "Mediastream")
 
 
+_SYSTEM_DIRS = ("/System", "/Library", "/usr", "/bin", "/sbin", "/etc", "/private/etc", "/var/root", "/opt",
+                "C:\\Windows", "C:\\Program Files")
+
+
+def check_dest(path: str) -> str:
+    """Resolve a folder the plugin will write to (downloads, renders) and refuse system or hidden folders.
+
+    Not a sandbox: any user folder or external drive is fine, which is what a newsroom needs."""
+    real = os.path.realpath(os.path.expanduser(str(path or "")))
+    if not real or real in (os.sep, os.path.expanduser("~")):
+        raise MediastreamError("choose a specific folder, not the root or the home folder")
+    low = real.lower()
+    if any(low == d.lower() or low.startswith(d.lower() + os.sep) for d in _SYSTEM_DIRS):
+        raise MediastreamError(f"refusing to write inside a system folder: {real}")
+    if any(part.startswith(".") for part in real.split(os.sep)[1:]):
+        raise MediastreamError("hidden folders are not used for downloads or renders")
+    return real
+
+
 def ensure_space(folder: str, need_bytes: int, what: str = "file") -> None:
     """Refuse early, with a readable message, when the disk cannot hold `need_bytes` (+10%)."""
     os.makedirs(folder, exist_ok=True)
@@ -139,14 +158,14 @@ def media_id(m: Any) -> str:
 
 def search(query: str = "", limit: int = 20, skip: int = 0, token: Optional[str] = None) -> List[dict]:
     t = token_from(token)
-    j = _json(_request("GET", _url("/api/media", query=query, limit=limit, skip=skip, token=t), t))
+    j = _json(_request("GET", _url("/api/media", query=query, limit=limit, skip=skip), t))
     d = j.get("data") or []
     return d if isinstance(d, list) else [d]
 
 
 def get(mid: str, admin: bool = False, token: Optional[str] = None) -> Optional[dict]:
     t = token_from(token)
-    j = _json(_request("GET", _url(f"/api/media/{urllib.parse.quote(mid)}", token=t,
+    j = _json(_request("GET", _url(f"/api/media/{urllib.parse.quote(mid)}",
                                    admin="true" if admin else None), t))
     d = j.get("data")
     return d[0] if isinstance(d, list) and d else d
@@ -298,7 +317,7 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
     path = check_path(path, VIDEO_EXTS)
     name = os.path.basename(path)
     size = os.path.getsize(path)
-    j = _json(_request("GET", _url("/api/media/upload", file_name=name, size=size, token=t), t))
+    j = _json(_request("GET", _url("/api/media/upload", file_name=name, size=size), t))
     srv = re.sub(r"^http://", "https://", j["data"]["server"], flags=re.I)
     started = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() - 5))
     total = max(1, -(-size // CHUNK_BYTES))
@@ -334,7 +353,7 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
     while not media and time.time() < deadline:
         try:
             recent = _json(_request("GET", _url("/api/media", admin="true", all="true",
-                                                sort="-date_created", limit=30, token=t), t)).get("data") or []
+                                                sort="-date_created", limit=30), t)).get("data") or []
         except MediastreamError:
             recent = []
         media = next((m for m in recent
@@ -365,7 +384,7 @@ def upload_subtitle(mid: str, srt_path: str, language: str = "es", language_name
     fields = {"name": name, "description": "null", "size": str(len(data)), "language": language,
               "language_name": language_name}
     body, ctype = _multipart(fields, "subtitle", name, data, "application/octet-stream")
-    url = _url(f"/api/media/{urllib.parse.quote(mid)}/subtitle", token=t)
+    url = _url(f"/api/media/{urllib.parse.quote(mid)}/subtitle")
     return _json(_request("POST", url, t, body, {"Content-Type": ctype})).get("data")
 
 

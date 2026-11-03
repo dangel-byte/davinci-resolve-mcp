@@ -27,6 +27,9 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 PAGE_FILE = pathlib.Path(__file__).with_name("panel.html")
 _CFG = (pathlib.Path(os.environ.get("APPDATA") or pathlib.Path.home() / "AppData" / "Roaming")
         if sys.platform == "win32" else pathlib.Path.home() / ".config")
+CSP = ("default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline' https://fonts.googleapis.com; "
+       "font-src https://fonts.gstatic.com; img-src https: data:; connect-src 'self'; frame-ancestors 'none'; "
+       "base-uri 'none'; form-action 'none'")  # the page is one file with inline script/style
 PREFS_FILE = _CFG / "mediastream-resolve" / "prefs.json"
 LOG_FILE = PREFS_FILE.with_name("panel.log")
 KEYCHAIN = ("mediastream-resolve", "api-token")
@@ -222,6 +225,12 @@ def _prefs_get():
 
 
 def _prefs_set(new):
+    if new.get("export_dir"):
+        from .client import MediastreamError, check_dest
+        try:
+            check_dest(new["export_dir"])
+        except MediastreamError as e:
+            return {"error": str(e)}
     allowed = {"lang", "export_dir", "watch_dir", "preset", "page_size", "publish"}
     prefs = _prefs_get() | {k: v for k, v in new.items() if k in allowed}
     PREFS_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -340,11 +349,20 @@ def make_server(call, key, port=0):
             self.send_response(code)
             self.send_header("Content-Type", ctype + "; charset=utf-8")
             self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("X-Frame-Options", "DENY")
+            self.send_header("Content-Security-Policy", CSP)
             self.end_headers()
             self.wfile.write(data)
 
         def _host_ok(self):  # blocks DNS-rebinding
             return self.headers.get("Host", "").split(":")[0] in ("127.0.0.1", "localhost")
+
+        def _origin_ok(self):  # a browser page on another site cannot call the API; no Origin = not a browser
+            o = self.headers.get("Origin")
+            port = self.server.server_address[1]
+            return o is None or o in (f"http://127.0.0.1:{port}", f"http://localhost:{port}")
 
         def do_GET(self):
             if self.path == "/" and self._host_ok():
@@ -353,7 +371,7 @@ def make_server(call, key, port=0):
             self._send(404, "{}")
 
         def do_POST(self):
-            if self.path != "/api" or not self._host_ok() or \
+            if self.path != "/api" or not self._host_ok() or not self._origin_ok() or \
                     not secrets.compare_digest(self.headers.get("X-Panel-Key", ""), key):
                 return self._send(403, '{"error":"forbidden"}')
             req = {}
