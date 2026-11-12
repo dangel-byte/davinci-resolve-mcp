@@ -231,7 +231,7 @@ def _prefs_set(new):
             check_dest(new["export_dir"])
         except MediastreamError as e:
             return {"error": str(e)}
-    allowed = {"lang", "export_dir", "watch_dir", "preset", "page_size", "publish"}
+    allowed = {"lang", "export_dir", "watch_dir", "preset", "page_size", "publish", "category"}
     prefs = _prefs_get() | {k: v for k, v in new.items() if k in allowed}
     PREFS_FILE.parent.mkdir(parents=True, exist_ok=True)
     PREFS_FILE.write_text(json.dumps(prefs), encoding="utf-8")

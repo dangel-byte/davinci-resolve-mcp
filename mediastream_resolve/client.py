@@ -315,8 +315,18 @@ def embed_url(media: dict) -> Optional[str]:
     return f"https://mdstrm.com/embed/{urllib.parse.quote(mid)}?account={urllib.parse.quote(str(acct))}"
 
 
+def categories(token: Optional[str] = None) -> List[dict]:
+    """GET /api/category: the token's account categories as [{id, name}], sorted by name."""
+    t = token_from(token)
+    raw = _json(_request("GET", _url("/api/category"), t)).get("data")
+    out = [{"id": str(c.get("_id") or c.get("id") or ""), "name": str(c.get("name") or "")}
+           for c in (raw if isinstance(raw, list) else []) if isinstance(c, dict)]
+    return sorted((c for c in out if c["id"] and c["name"]), key=lambda c: c["name"].lower())
+
+
 def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
-           poll_seconds: int = 60, publish: bool = False, progress=None) -> dict:
+           poll_seconds: int = 60, publish: bool = False, progress=None,
+           categories: Optional[List[str]] = None) -> dict:
     """Resumable chunk upload. Returns {media_id, media} (media is None if not visible yet).
 
     publish=True also sets is_published (the Premiere panel's "publish" switch); the default
@@ -370,11 +380,14 @@ def upload(path: str, title: Optional[str] = None, token: Optional[str] = None,
         if not media:
             time.sleep(4)
     mid = media_id(media) if media else ""
-    if media and ((title and title != media.get("title")) or publish):
+    cats = [str(c) for c in (categories or []) if c]
+    if media and ((title and title != media.get("title")) or publish or cats):
         fields = {"token": t, "is_published": "true" if publish else "false"}
         if title:
             fields["title"] = title
-        body = urllib.parse.urlencode(fields).encode()
+        if cats:
+            fields["categories"] = cats
+        body = urllib.parse.urlencode(fields, doseq=True).encode()
         _json(_request("POST", f"{BASE}/api/media/{urllib.parse.quote(mid)}", None, body,
                        {"Content-Type": "application/x-www-form-urlencoded"}))
     return {"media_id": mid, "media": media, "title": title or name}

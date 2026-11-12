@@ -294,6 +294,21 @@ class PublishFlag(unittest.TestCase):
             ms.upload(f, None, "t", poll_seconds=1, progress=lambda *a: ev.append(a))
         self.assertEqual(ev, [("upload", 4, 6), ("upload", 6, 6), ("finalize", 0, 0)])
 
+    def test_categories_sorted_and_sent_repeated_on_upload(self):
+        reply = {"status": "OK", "data": [{"_id": "b", "name": "Zeta"}, {"id": "a", "name": "alfa"}, {"name": "sin id"}]}
+        with mock.patch.object(ms, "_request", mock.MagicMock()), mock.patch.object(ms, "_json", return_value=reply):
+            self.assertEqual(ms.categories("t"), [{"id": "a", "name": "alfa"}, {"id": "b", "name": "Zeta"}])
+        import os, tempfile
+        f = os.path.join(tempfile.mkdtemp(), "reel.mp4"); open(f, "wb").write(b"abc")
+        media = {"_id": "m1", "title": "reel", "date_created": "9999"}
+        replies = [{"status": "OK", "data": {"server": "https://s/u"}}, {"status": "OK", "data": [media]}, {"status": "OK", "data": {}}]
+        req = mock.MagicMock()
+        with mock.patch.object(ms, "_request", req), mock.patch.object(ms, "_json", side_effect=replies), \
+             mock.patch.object(ms, "_with_retry", lambda fn, tries=4: True):
+            ms.upload(f, None, "t", poll_seconds=1, categories=["c1", "c2"])
+        body = req.call_args_list[-1][0][3].decode()
+        self.assertIn("categories=c1&categories=c2", body)
+
     def test_download_resumes_with_range_after_a_cut_and_verifies_size(self):
         import http.client, os, tempfile
         data = b"0123456789"

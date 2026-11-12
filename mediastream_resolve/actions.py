@@ -9,7 +9,7 @@ from . import client as ms
 from .resolve import ResolveError
 
 RENDER_MIN_FREE = 2 * 1024 ** 3  # ponytail: flat 2 GB floor; the render size is unknown up front
-ACTIONS = ["search", "download", "upload", "subtitle", "embed", "export_upload"]
+ACTIONS = ["search", "download", "upload", "subtitle", "embed", "export_upload", "categories"]
 
 
 def _ok(**kw):
@@ -36,6 +36,8 @@ def make_mediastream(resolve):
                 return _ok(items=[{"id": ms.media_id(m), "title": m.get("title"),
                                    "embed": ms.embed_url(m), "thumb": ms.thumbnail_url(m),
                                    "duration": m.get("duration"), "vertical": bool(m.get("is_vertical"))} for m in items])
+            if action == "categories":
+                return _ok(items=ms.categories(tok))
             if action == "embed":
                 return _ok(embed=ms.embed_url(ms.get(p["media_id"], token=tok) or {}))
             if action == "download":
@@ -52,7 +54,8 @@ def make_mediastream(resolve):
             if action == "upload":
                 if not p.get("path"):
                     return _err("upload requires path")
-                r = ms.upload(p["path"], p.get("title"), tok, publish=_bool(p.get("publish"), False), progress=prog)
+                r = ms.upload(p["path"], p.get("title"), tok, publish=_bool(p.get("publish"), False), progress=prog,
+                              categories=p.get("categories"))
                 return _ok(media_id=r["media_id"], found=bool(r["media"]))
             if action == "export_upload":
                 if not p.get("target_dir"):
@@ -63,7 +66,8 @@ def make_mediastream(resolve):
                                          "settings", "custom_name") if p.get(k)}
                 rkw = {"progress": prog} if prog and getattr(resolve, "supports_progress", False) else {}
                 out = resolve.render_current(job, float(p.get("timeout", 3600)), **rkw)
-                r = ms.upload(out, p.get("title"), tok, publish=_bool(p.get("publish"), False), progress=prog)
+                r = ms.upload(out, p.get("title"), tok, publish=_bool(p.get("publish"), False), progress=prog,
+                              categories=p.get("categories"))
                 res = {"output_path": out, "media_id": r["media_id"], "found": bool(r["media"])}
                 if p.get("srt_path") and r["media_id"]:
                     res["subtitle"] = ms.upload_subtitle(r["media_id"], p["srt_path"], token=tok)
