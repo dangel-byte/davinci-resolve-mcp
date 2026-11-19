@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-14
+          - os: macos-15
             asset: mediastream-resolve-macos-arm64.tar.gz
             exe: mediastream-engine
           - os: windows-latest
@@ -91,7 +91,7 @@ jobs:
     needs: release
     strategy:
       matrix:
-        os: [macos-14, windows-latest]
+        os: [macos-15, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
