@@ -28,13 +28,15 @@ Contra Platform real y un Resolve Studio real:
 - Instalar el `.pkg` y el `.ccx` en un equipo limpio y abrir cada plugin **dentro** de Resolve / Premiere.
 - Resolve: atajos Cmd+F, Cmd+, y Cmd+1-2 / Esc en la ventana del plugin; barra de estado con token guardado; si la carpeta vigilada sigue activa al cerrar la ventana. No automatizar con teclas: cuelga Resolve.
 - Premiere: botón **Embed**, línea base de la carpeta vigilada, subida del `.srt` (ahora en español por defecto) y validación del token en la pantalla de inicio. Todo revisado en código y con pruebas de la capa API, no ejecutado dentro de Premiere.
-- Windows, Linux y Mac Intel: el código tiene rutas para Windows y Linux, sin probar; el instalador es solo macOS arm64.
+- Windows: el motor, el Administrador de credenciales, el `.exe` (Inno Setup) y el comando de PowerShell pasan en CI (`.github/workflows/mediastream-release.yml`), pero nunca se abrió el plugin dentro de un Resolve Studio en Windows.
+- macOS arm64: el `.pkg` y `install-mac.sh` se probaron en un árbol temporal; falta un Mac limpio con «Abrir igualmente» y el plugin abierto en Resolve.
+- Linux y Mac Intel: sin versión.
 
 ## Decisiones de IT / negocio
 
 1. **Repos en la organización.** La org `mediastream` rechazó el fork (403). Hoy viven en la cuenta personal `dangel-byte`; el de Premiere es privado. Hace falta que alguien con permisos cree repos en la org y los transfiera.
-2. **Firma.** macOS: Apple Developer (99 USD/año) y notarización. Windows: certificado de firma. Sin firma, Gatekeeper/SmartScreen avisan al instalar (el `.pkg` se abre con clic derecho → Abrir).
-3. **Windows en v1.** Decidir si se prueba y se soporta; el motor y el `.exe` hay que compilarlos en Windows (`packaging/build_engine.py`).
+2. **Firma.** Sin firma, macOS dice que «no pudo verificar que no contenga malware» (se autoriza en Privacidad y seguridad → Abrir igualmente; clic derecho → Abrir ya no sirve desde macOS 15) y Windows muestra SmartScreen (Más información → Ejecutar de todas formas). Mediastream tiene Apple Developer («Mediastream Servicios de Internet Ltda»); el Account Holder anterior ya no está y falta confirmar el actual, que es quien puede crear los certificados Developer ID. CSR listo fuera del repo. Windows: certificado de firma sin definir.
+3. **Publicación.** Releases en GitHub (`mediastream-v*`): CI compila Windows; los archivos de Mac se suben desde un Mac con `packaging/publish_mac_release.sh` porque los runners macOS arm64 de GitHub no se asignaron (19 nov 2026).
 4. **Distribución.** Canales de TV y usuarios personales. Opciones: `.pkg`/`.exe`/`.ccx` firmados, o repo + script de instalación. Para Premiere, decidir si va al Marketplace de Adobe.
 5. **Actualizaciones.** El aviso de versión está **apagado** hasta que IT publique un manifiesto (`{"version","url"}`) y configure `MEDIASTREAM_UPDATE_URL` o `update_url` en `prefs.json`. Nunca instala nada solo.
 
