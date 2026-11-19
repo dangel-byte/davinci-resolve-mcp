@@ -1,8 +1,8 @@
 ; Windows installer (Inno Setup 6) for the Mediastream plugin for DaVinci Resolve Studio.
-;   iscc /DVer=X.Y.Z /DSrc=<folder with com.mediastream.platform> packaging\windows\mediastream.iss
+;   iscc /DAppVer=X.Y.Z /DSrc=<folder with com.mediastream.platform> packaging\windows\mediastream.iss
 ; Unsigned: SmartScreen shows "Windows protegio su PC" -> "Mas informacion" -> "Ejecutar de todas formas".
-#ifndef Ver
-  #error Pass /DVer=X.Y.Z
+#ifndef AppVer
+  #error Pass /DAppVer=X.Y.Z
 #endif
 #ifndef Src
   #define Src "..\..\pkg\com.mediastream.platform"
@@ -11,7 +11,7 @@
 [Setup]
 AppId=com.mediastream.resolve
 AppName=Mediastream para DaVinci Resolve
-AppVersion={#Ver}
+AppVersion={#AppVer}
 AppPublisher=Mediastream
 DefaultDirName={commonappdata}\Blackmagic Design\DaVinci Resolve\Support\Workflow Integration Plugins\com.mediastream.platform
 DisableDirPage=yes
@@ -21,7 +21,7 @@ PrivilegesRequired=admin
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=.
-OutputBaseFilename=Mediastream-Resolve-{#Ver}-Windows
+OutputBaseFilename=Mediastream-Resolve-{#AppVer}-Windows
 UninstallDisplayName=Mediastream para DaVinci Resolve
 Compression=lzma2
 SolidCompression=yes

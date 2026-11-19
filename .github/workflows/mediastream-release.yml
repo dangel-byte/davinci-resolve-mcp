@@ -63,7 +63,7 @@ jobs:
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
           $v = [regex]::Match((Get-Content mediastream_resolve/__init__.py -Raw), '"([^"]+)"').Groups[1].Value
-          & $iscc /Q "/DVer=$v" "/DSrc=$PWD\pkg\com.mediastream.platform" "/O$PWD" packaging\windows\mediastream.iss
+          & $iscc /Q "/DAppVer=$v" "/DSrc=$PWD\pkg\com.mediastream.platform" "/O$PWD" packaging\windows\mediastream.iss
           if ($LASTEXITCODE) { exit 1 }
       - name: Installer .exe installs, runs and uninstalls
         shell: pwsh
