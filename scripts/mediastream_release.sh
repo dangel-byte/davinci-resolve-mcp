@@ -19,9 +19,9 @@ packaging/build_pkg_macos.sh dist | tail -1
 python3 docs/tutorial/build_pdf.py guia-resolve.html "$KIT/DaVinci-Resolve/Guia-Mediastream-DaVinci-Resolve.pdf" >/dev/null
 python3 "$PU/docs/tutorial/build_pdf.py" guia-premiere.html "$KIT/Premiere-Pro/Guia-Mediastream-Premiere-Pro.pdf" >/dev/null
 # Kit: installers (old versions out) + texts
-rm -f "$KIT"/DaVinci-Resolve/Mediastream-Resolve-*.pkg "$KIT"/Premiere-Pro/*.ccx "$KIT/DaVinci-Resolve/Desinstalar Mediastream.command"
-# ponytail: the unsigned .pkg/.command stay out of the kit (macOS shows a "malware" warning when opened from a
-# download); Mac installs with packaging/install-mac.sh. Copy them back here once they are signed and notarized.
+rm -f "$KIT"/DaVinci-Resolve/Mediastream-Resolve-* "$KIT"/Premiere-Pro/*.ccx
+cp "dist/Mediastream-Resolve-$NEW.pkg" "$KIT/DaVinci-Resolve/"
+cp packaging/macos/uninstall.command "$KIT/DaVinci-Resolve/Desinstalar Mediastream.command"
 cp "$PU"/dist/*-"$NEW".ccx "$KIT/Premiere-Pro/"
 sed -i '' "s/$OLD/$NEW/g" "$KIT/LEEME.txt" "$KIT/Correo-entrega-parcial.md" "$KIT/QA-Checklist.md"
-echo "listo $OLD -> $NEW. Falta: commit/push en este repo y en premiere-uxp."
+echo "listo $OLD -> $NEW. Falta: commit/push, tag mediastream-v$NEW (CI: Windows) y packaging/publish_mac_release.sh."

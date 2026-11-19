@@ -57,10 +57,33 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: Compress-Archive -Path pkg/com.mediastream.platform -DestinationPath "${{ matrix.asset }}"
+      - name: Installer .exe (Inno Setup)
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress | Out-Null }
+          $v = [regex]::Match((Get-Content mediastream_resolve/__init__.py -Raw), '"([^"]+)"').Groups[1].Value
+          & $iscc /Q "/DVer=$v" "/DSrc=$PWD\pkg\com.mediastream.platform" "/O$PWD" packaging\windows\mediastream.iss
+          if ($LASTEXITCODE) { exit 1 }
+      - name: Installer .exe installs, runs and uninstalls
+        shell: pwsh
+        run: |
+          $sup = "$env:ProgramData\Blackmagic Design\DaVinci Resolve\Support"; New-Item -ItemType Directory -Force $sup | Out-Null
+          $exe = (Get-ChildItem Mediastream-Resolve-*-Windows.exe).FullName
+          Start-Process $exe -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES','/NORESTART' -Wait
+          $plug = "$sup\Workflow Integration Plugins\com.mediastream.platform"
+          $cfg = Get-Content "$plug\config.json" -Raw | ConvertFrom-Json
+          python packaging/smoke_engine.py $cfg.engine; if ($LASTEXITCODE) { exit 1 }
+          Start-Process "$plug\unins000.exe" -ArgumentList '/VERYSILENT','/SUPPRESSMSGBOXES' -Wait
+          Start-Sleep 5
+          if (Test-Path "$plug\engine") { throw "uninstall left $plug" }
+          'installer OK'
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}
-          path: ${{ matrix.asset }}
+          path: |
+            ${{ matrix.asset }}
+            Mediastream-Resolve-*-Windows.exe
 
   release:
     needs: build
@@ -76,7 +99,7 @@ jobs:
         run: |
           cp packaging/install-mac.sh packaging/install-windows.ps1 out/
           gh release create "$GITHUB_REF_NAME" out/* --title "Mediastream para DaVinci Resolve ${GITHUB_REF_NAME#mediastream-v}" \
-            --notes "Instalar sin instalador: ver la guia PDF. macOS (Apple Silicon): curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/install-mac.sh | sh  ·  Windows (PowerShell): irm https://github.com/${{ github.repository }}/releases/latest/download/install-windows.ps1 | iex"
+            --notes "Instaladores: Mediastream-Resolve-*.pkg (Mac Apple Silicon) y Mediastream-Resolve-*-Windows.exe (sin firma: ver la guia PDF). Por comando, macOS (Apple Silicon): curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/install-mac.sh | sh  ·  Windows (PowerShell): irm https://github.com/${{ github.repository }}/releases/latest/download/install-windows.ps1 | iex"
 
   verify:
     needs: release

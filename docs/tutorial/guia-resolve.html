@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <title>Mediastream para DaVinci Resolve — Guía</title>
-<meta name="doc-kind" content="Guía de instalación y uso"><meta name="doc-version" content="Mediastream para DaVinci Resolve · v1.1.6 · noviembre 2026">
+<meta name="doc-kind" content="Guía de instalación y uso"><meta name="doc-version" content="Mediastream para DaVinci Resolve · v1.1.7 · noviembre 2026">
 <meta name="doc-title" content="Mediastream para DaVinci Resolve — Guía de instalación y uso">
 <style>{{CSS}}</style></head><body>
 
@@ -10,7 +10,7 @@
   {{LOGO}}
   <h1>Mediastream<br>para <span>DaVinci Resolve</span></h1>
   <p class="sub">Busca en tu catálogo de Platform, importa a tu proyecto y sube tus renders, sin salir del flujo de edición.</p>
-  <div class="meta"><span>Guía de instalación y uso · versión 1.1.6</span><span>Noviembre 2026</span></div>
+  <div class="meta"><span>Guía de instalación y uso · versión 1.1.7</span><span>Noviembre 2026</span></div>
 </div></section>
 
 <!-- 2 QUÉ HACE -->
@@ -53,48 +53,47 @@
 <!-- 4 INSTALACION -->
 <section class="page">{{HDR}}
   <p class="eyebrow">Paso a paso</p><h1>Instalación</h1>
-  <p class="lead">Se instala con <b>un solo comando</b>. Así macOS y Windows no bloquean el plugin, que aún no está firmado. Primero <b>cierra DaVinci Resolve Studio</b>.</p>
-  <h2>macOS (Apple Silicon)</h2>
+  <p class="lead">Cierra DaVinci Resolve Studio y abre el instalador de tu sistema. El plugin aún no tiene la firma de Apple ni la de Microsoft: la <b>primera vez</b> el sistema muestra un aviso y hay que autorizarlo a mano. <b>No es malware</b>: es el aviso que muestran con cualquier programa sin firma.</p>
+  <h2>Mac (Apple Silicon) · <code>Mediastream-Resolve-1.1.7.pkg</code></h2>
   <ol class="steps">
-    <li>Abre <b>Terminal</b>: <span class="kbd">⌘ Espacio</span>, escribe <i>Terminal</i> y pulsa Enter.</li>
-    <li>Copia este comando, pégalo en Terminal y pulsa Enter:<code style="display:block;white-space:nowrap;font-size:6.9pt;padding:2mm 2.5mm;margin:1.5mm 0;overflow:hidden">curl -fsSL https://github.com/dangel-byte/davinci-resolve-mcp/releases/latest/download/install-mac.sh | sh</code></li>
-    <li>Escribe la <b>contraseña de tu Mac</b> cuando la pida (no se ve mientras escribes) y pulsa Enter.</li>
-    <li>Cuando diga <b>«Listo»</b>, abre Resolve Studio → <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
+    <li><b>Doble clic</b> en el <code>.pkg</code>. macOS dice que no pudo verificar que no contenga malware: pulsa <b>Listo</b> (no lo mandes a la papelera).</li>
+    <li>Abre <i>menú Apple → Ajustes del Sistema → Privacidad y seguridad</i> y baja hasta <b>Seguridad</b>. Verás un aviso sobre <i>Mediastream-Resolve</i>.</li>
+    <li>Pulsa <b>Abrir igualmente</b>, confirma con tu contraseña o Touch ID y, en el aviso que vuelve a salir, <b>Abrir igualmente</b>.</li>
+    <li>Sigue el asistente: <b>Continuar → Instalar</b> y tu contraseña.</li>
   </ol>
-  <h2>Windows 10/11</h2>
+  <h2>Windows 10/11 · <code>Mediastream-Resolve-1.1.7-Windows.exe</code></h2>
   <ol class="steps">
-    <li>Abre el menú Inicio, escribe <i>PowerShell</i>, clic derecho → <b>Ejecutar como administrador</b> → <b>Sí</b>.</li>
-    <li>Copia este comando, pégalo en PowerShell (clic derecho pega) y pulsa Enter:<code style="display:block;white-space:nowrap;font-size:6.9pt;padding:2mm 2.5mm;margin:1.5mm 0;overflow:hidden">irm https://github.com/dangel-byte/davinci-resolve-mcp/releases/latest/download/install-windows.ps1 | iex</code></li>
-    <li>Cuando diga <b>«Listo»</b>, abre Resolve Studio → <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
+    <li><b>Doble clic</b> en el <code>.exe</code>. Si aparece <i>«Windows protegió su PC»</i>, pulsa <b>Más información → Ejecutar de todas formas</b>.</li>
+    <li>Windows pregunta si permites que haga cambios: <b>Sí</b>. Sigue el asistente hasta <b>Finalizar</b>.</li>
   </ol>
   <div class="cols">
     <div>
       <h3>¿Cómo sé que quedó bien?</h3>
       <ul>
-        <li><i>Mediastream Platform</i> aparece en <i>Workspace → Workflow Integrations</i>.</li>
-        <li>Al abrirlo, muestra <b>«Conecta tu cuenta»</b> (la primera vez).</li>
+        <li>En Resolve: <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
+        <li>La primera vez muestra <b>«Conecta tu cuenta»</b>.</li>
       </ul>
-      <div class="tip"><b>Actualizar</b>Repite el mismo comando: baja siempre la última versión, reemplaza la anterior y conserva tu token y tus ajustes.</div>
     </div>
     <div>
-      <h3>Qué se instala</h3>
-      <p style="font-size:8.5pt">Una carpeta <code>com.mediastream.platform</code> en <i>Workflow Integration Plugins</i> de Resolve (rutas en la página 13). El comando copia el módulo <code>WorkflowIntegration.node</code> desde tu propia instalación de Resolve (Blackmagic no permite redistribuirlo): instala Resolve antes que el plugin.</p>
-      <p style="font-size:8.5pt">El comando y los archivos están en el <code>LEEME.txt</code> del kit, por si prefieres copiarlos de ahí.</p>
+      <div class="tip"><b>Actualizar</b>Abre el instalador nuevo encima: reemplaza la versión anterior y conserva tu token y tus ajustes. El aviso del sistema sale otra vez con cada instalador nuevo.</div>
+      <div class="note"><b>Si no ves «Abrir igualmente»</b>Aparece solo después de intentar abrir el <code>.pkg</code>, y por un rato. Vuelve a hacer doble clic y entra de nuevo a <i>Privacidad y seguridad</i>. Clic derecho → Abrir ya no sirve desde macOS 15.</div>
     </div>
   </div>
 {{FTR}}</section>
 
-<!-- 4b POR QUE NO HAY DOBLE CLIC -->
+<!-- 4b POR COMANDO (IT) -->
 <section class="page">{{HDR}}
-  <p class="eyebrow">Antes de que preguntes</p><h1>¿Y el instalador con doble clic?</h1>
-  <p class="lead">Por ahora no se reparte. El plugin todavía no tiene la <b>firma de Apple</b>, y macOS muestra este aviso con cualquier instalador sin firma que llega por descarga, correo o Drive:</p>
-  <div class="card"><p style="margin:0"><i>«Apple no pudo verificar que “Mediastream-Resolve.pkg” no contenga malware que pueda dañar tu Mac o poner en riesgo tu privacidad.»</i></p></div>
-  <div class="warn"><b>No es malware</b>Es el aviso estándar de macOS para programas que aún no pasaron por la verificación (notarización) de Apple. Si te llega un <code>.pkg</code> de Mediastream y ves este aviso, pulsa <b>Listo</b> e instala con el comando de la página 4: hace lo mismo y macOS no lo bloquea.</div>
-  <h2>Por qué el comando no recibe el aviso</h2>
-  <p>macOS marca los archivos que bajas con el navegador, Drive o el correo y los revisa al abrirlos. Lo que descarga el comando <code>curl</code> no lleva esa marca. El contenido es el mismo y viene de la misma publicación oficial.</p>
-  <div class="note"><b>Windows</b>Pasa lo mismo: un <code>.exe</code> sin firma haría que SmartScreen mostrara «Windows protegió su PC». Por eso en Windows también se instala con el comando.</div>
-  <div class="note"><b>Cuando el plugin esté firmado</b>Con la firma de Apple (Developer ID con notarización) y la de Windows, el instalador se abrirá con doble clic y sin avisos. Está pendiente: Mediastream ya tiene cuenta de Apple Developer.</div>
-  <div class="note"><b>Para IT</b>El <code>.pkg</code> sin firma está en <i>github.com/dangel-byte/davinci-resolve-mcp/releases</i>. Se autoriza una vez en <i>Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente</i> (clic derecho → Abrir dejó de funcionar en macOS 15).</div>
+  <p class="eyebrow">Alternativa para IT</p><h1>Instalar por comando</h1>
+  <p class="lead">Si el instalador está bloqueado por la política del equipo, o para instalar en varios equipos, el mismo plugin se instala con un comando. Lo que descarga el comando no lleva la marca de «descargado de internet», así que no aparece el aviso.</p>
+  <h2>Mac — Terminal</h2>
+  <code style="display:block;white-space:nowrap;font-size:6.9pt;padding:2mm 2.5mm;margin:1.5mm 0;overflow:hidden">curl -fsSL https://github.com/dangel-byte/davinci-resolve-mcp/releases/latest/download/install-mac.sh | sh</code>
+  <p style="font-size:8.5pt">Pide la contraseña del Mac. Para desinstalar, agrega <code>-s -- --uninstall</code> al final.</p>
+  <h2>Windows — PowerShell como administrador</h2>
+  <code style="display:block;white-space:nowrap;font-size:6.9pt;padding:2mm 2.5mm;margin:1.5mm 0;overflow:hidden">irm https://github.com/dangel-byte/davinci-resolve-mcp/releases/latest/download/install-windows.ps1 | iex</code>
+  <p style="font-size:8.5pt">Para desinstalar, antepón <code>$env:MS_UNINSTALL=1;</code> al comando.</p>
+  <h3>Qué se instala</h3>
+  <p style="font-size:8.5pt">Con el instalador o con el comando: una carpeta <code>com.mediastream.platform</code> en <i>Workflow Integration Plugins</i> de Resolve (rutas en la página 13). Se copia el módulo <code>WorkflowIntegration.node</code> desde la propia instalación de Resolve (Blackmagic no permite redistribuirlo): instala Resolve antes que el plugin.</p>
+  <div class="note"><b>Cuando el plugin esté firmado</b>Con la firma de Apple (Developer ID con notarización) y la de Windows, los instaladores se abrirán con doble clic y sin avisos.</div>
 {{FTR}}</section>
 
 <!-- 5 PRIMER USO -->
@@ -257,7 +256,8 @@
     <tr><td>«not enough disk space…»</td><td>Libera espacio o cambia la <b>Carpeta de exportación</b>.</td></tr>
     <tr><td>Subí un video y no lo encuentro en <b>Media</b></td><td>Está sin publicar. Publícalo en Platform o súbelo con <b>Publicar al subir</b>.</td></tr>
     <tr><td>Importar descarga pero no aparece en el Media Pool</td><td>Comprueba que haya un proyecto abierto. El archivo queda en <code>~/Movies/Mediastream</code>: impórtalo con <i>File → Import Media</i>.</td></tr>
-    <tr><td>macOS dice que no puede verificar que el instalador «no contenga malware»</td><td>No es malware: es un instalador sin firma de Apple (página 5). Instala con el comando de Terminal (página 4).</td></tr>
+    <tr><td>macOS dice que no puede verificar que el instalador «no contenga malware»</td><td>No es malware: falta la firma de Apple. Pulsa <b>Listo</b> y autorízalo en <i>Privacidad y seguridad → Abrir igualmente</i> (página 4).</td></tr>
+    <tr><td>«Windows protegió su PC»</td><td><b>Más información → Ejecutar de todas formas</b> (página 4).</td></tr>
     <tr><td>PowerShell: «Sin permiso para escribir…»</td><td>Abre PowerShell con clic derecho → <b>Ejecutar como administrador</b> y repite el comando.</td></tr>
     <tr><td>Windows o el antivirus bloquea <code>mediastream-engine.exe</code></td><td>Pasa con programas sin firma, sobre todo con el <i>Control inteligente de aplicaciones</i> de Windows 11. Pide a IT una excepción para la carpeta del plugin hasta que esté firmado.</td></tr>
     <tr><td>El plugin no aparece en <i>Workflow Integrations</i></td><td>Solo existe en <b>Studio</b>. Reinicia Resolve. Si sigue sin aparecer, repite el comando de instalación con Resolve ya instalado.</td></tr>
@@ -276,17 +276,17 @@
     <div>
       <h2>Desinstalar</h2>
       <ol class="steps">
-        <li>(Opcional) En el plugin: <b>Configuración → Borrar</b> para quitar tu token del llavero.</li>
-        <li><b>Mac</b>: en Terminal, <code>curl -fsSL …/install-mac.sh | sh -s -- --uninstall</code> (el mismo comando de instalación con <code>-s -- --uninstall</code> al final) y tu contraseña.</li>
-        <li><b>Windows</b>: en PowerShell como administrador, <code>$env:MS_UNINSTALL=1;</code> seguido del comando de instalación.</li>
+        <li>(Opcional) En el plugin: <b>Configuración → Borrar</b> para quitar tu token.</li>
+        <li><b>Mac</b>: doble clic en <b>Desinstalar Mediastream.command</b> (viene en el kit; se autoriza igual que el instalador, en <i>Privacidad y seguridad</i>) y tu contraseña.</li>
+        <li><b>Windows</b>: <i>Configuración → Aplicaciones → Aplicaciones instaladas → Mediastream para DaVinci Resolve → Desinstalar</i>.</li>
       </ol>
       <h2>Actualizar</h2>
-      <p>Repite el comando de instalación: siempre baja la última versión. Si tu equipo de IT configuró un aviso de actualizaciones, el plugin te mostrará un aviso con la dirección de descarga; <b>nunca se instala nada solo</b>.</p>
+      <p>Abre el instalador de la versión nueva encima de la anterior (o repite el comando de la página 5). Si tu equipo de IT configuró un aviso de actualizaciones, el plugin te mostrará un aviso con la dirección de descarga; <b>nunca se instala nada solo</b>.</p>
     </div>
     <div>
       <h2>Datos para IT</h2>
       <table>
-        <tr><td style="width:36%"><b>Versión</b></td><td>1.1.6 · sin firmar · macOS arm64 y Windows x64. Descargas en <i>github.com/dangel-byte/davinci-resolve-mcp/releases</i></td></tr>
+        <tr><td style="width:36%"><b>Versión</b></td><td>1.1.7 · sin firmar · macOS arm64 y Windows x64. Descargas en <i>github.com/dangel-byte/davinci-resolve-mcp/releases</i></td></tr>
         <tr><td><b>Carpeta</b></td><td>Mac: <code>/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.mediastream.platform</code> · Windows: <code>%ProgramData%\Blackmagic Design\DaVinci Resolve\Support\Workflow Integration Plugins\com.mediastream.platform</code></td></tr>
         <tr><td><b>Token</b></td><td>Llavero de macOS / Administrador de credenciales de Windows, servicio <code>mediastream-resolve</code></td></tr>
         <tr><td><b>Ajustes y log</b></td><td><code>~/.config/mediastream-resolve/</code> · Windows <code>%APPDATA%\mediastream-resolve\</code> (<code>prefs.json</code>, <code>panel.log</code>)</td></tr>

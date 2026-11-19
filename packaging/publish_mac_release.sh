@@ -19,4 +19,7 @@ gh release upload "mediastream-v$VER" -R "$REPO" --clobber "$T/mediastream-resol
 R="$T/root"; mkdir -p "$R/Library/Application Support/Blackmagic Design/DaVinci Resolve"
 curl -fsSL "https://github.com/$REPO/releases/latest/download/install-mac.sh" | MS_TEST_ROOT="$R" sh
 python3 packaging/smoke_engine.py "$R/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.mediastream.platform/engine/mediastream-engine"
-echo "ok: macOS publicado en mediastream-v$VER"
+# Kit: the Windows installer CI built for this tag.
+KIT="${KIT_DIR:-../mediastream-plugins-kit}"
+gh release download "mediastream-v$VER" -R "$REPO" -p "Mediastream-Resolve-$VER-Windows.exe" -D "$KIT/DaVinci-Resolve" --clobber
+echo "ok: macOS publicado en mediastream-v$VER; instalador de Windows en el kit"
