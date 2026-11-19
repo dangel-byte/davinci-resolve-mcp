@@ -31,7 +31,7 @@ function start() {
     args = ['-m', 'mediastream_resolve.panel', '--no-open', '--port', '0']; opts = { cwd: repo };
   }
 
-  child = spawn(cmd, args, opts);
+  child = spawn(cmd, args, { ...opts, windowsHide: true });  // Windows: no console window for the engine
   let buf = '';
   child.stdout.on('data', (d) => {
     buf += d;

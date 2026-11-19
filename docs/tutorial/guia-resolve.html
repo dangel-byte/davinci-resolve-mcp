@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8">
 <title>Mediastream para DaVinci Resolve — Guía</title>
-<meta name="doc-kind" content="Guía de instalación y uso"><meta name="doc-version" content="Mediastream para DaVinci Resolve · v1.1.5 · noviembre 2026">
+<meta name="doc-kind" content="Guía de instalación y uso"><meta name="doc-version" content="Mediastream para DaVinci Resolve · v1.1.6 · noviembre 2026">
 <meta name="doc-title" content="Mediastream para DaVinci Resolve — Guía de instalación y uso">
 <style>{{CSS}}</style></head><body>
 
@@ -10,7 +10,7 @@
   {{LOGO}}
   <h1>Mediastream<br>para <span>DaVinci Resolve</span></h1>
   <p class="sub">Busca en tu catálogo de Platform, importa a tu proyecto y sube tus renders, sin salir del flujo de edición.</p>
-  <div class="meta"><span>Guía de instalación y uso · versión 1.1.5</span><span>Noviembre 2026</span></div>
+  <div class="meta"><span>Guía de instalación y uso · versión 1.1.6</span><span>Noviembre 2026</span></div>
 </div></section>
 
 <!-- 2 QUÉ HACE -->
@@ -24,15 +24,15 @@
   </div>
   <table>
     <tr><th style="width:34%">Quiero…</th><th>Dónde lo hago</th></tr>
-    <tr><td><b>Traer un video de Platform</b> a mi proyecto</td><td>Pestaña <b>Media</b> → buscar → <b>Importar</b> (página 6)</td></tr>
-    <tr><td><b>Subir mi timeline</b> terminado</td><td>Pestaña <b>Subir</b> → <b>Exportar y subir</b> (página 7)</td></tr>
-    <tr><td><b>Subir un archivo</b> que ya tengo</td><td>Pestaña <b>Subir</b> → <b>Subir un archivo</b> (página 8)</td></tr>
-    <tr><td>Que <b>todo lo que exporte a una carpeta</b> se suba solo</td><td><b>Configuración</b> → <b>Carpeta vigilada</b> (página 9)</td></tr>
-    <tr><td>Subir con <b>subtítulos</b></td><td>Campo <b>Subtítulos .srt</b> o un <code>.srt</code> junto al video (página 10)</td></tr>
+    <tr><td><b>Traer un video de Platform</b> a mi proyecto</td><td>Pestaña <b>Media</b> → buscar → <b>Importar</b> (página 7)</td></tr>
+    <tr><td><b>Subir mi timeline</b> terminado</td><td>Pestaña <b>Subir</b> → <b>Exportar y subir</b> (página 8)</td></tr>
+    <tr><td><b>Subir un archivo</b> que ya tengo</td><td>Pestaña <b>Subir</b> → <b>Subir un archivo</b> (página 9)</td></tr>
+    <tr><td>Que <b>todo lo que exporte a una carpeta</b> se suba solo</td><td><b>Configuración</b> → <b>Carpeta vigilada</b> (página 10)</td></tr>
+    <tr><td>Subir con <b>subtítulos</b></td><td>Campo <b>Subtítulos .srt</b> o un <code>.srt</code> junto al video (página 11)</td></tr>
   </table>
   <h3>Dónde lo encuentras</h3>
   <div class="card"><p class="eyebrow">Plugin de DaVinci Resolve Studio</p><p style="margin:0">Menú <i>Workspace → Workflow Integrations → Mediastream Platform</i>. Se abre como una ventana de Resolve; puedes dejarla abierta mientras editas.</p></div>
-  <div class="note"><b>Tu token es tuyo</b>El API token se guarda en el llavero de macOS. El panel nunca lo vuelve a mostrar y no lo escribe en ningún archivo.</div>
+  <div class="note"><b>Tu token es tuyo</b>El API token se guarda en el llavero de macOS o en el Administrador de credenciales de Windows. El panel nunca lo vuelve a mostrar y no lo escribe en ningún archivo.</div>
 {{FTR}}</section>
 
 <!-- 3 REQUISITOS -->
@@ -40,11 +40,11 @@
   <p class="eyebrow">Antes de instalar</p><h1>Requisitos</h1>
   <table>
     <tr><th style="width:30%">Qué necesitas</th><th>Detalle</th></tr>
-    <tr><td>Mac con <b>Apple Silicon</b></td><td>El instalador incluido es para chips M1 o superiores. Para un Mac Intel hay que generar otro instalador (pídelo a IT).</td></tr>
+    <tr><td><b>Mac con Apple Silicon</b> o <b>Windows 10/11</b> (64 bits)</td><td>En Mac, chips M1 o superiores. Mac Intel y Linux aún no tienen versión (pídela a IT).</td></tr>
     <tr><td>DaVinci Resolve <b>Studio 21</b></td><td>Los plugins (<i>Workflow Integrations</i>) existen solo en la edición <b>Studio</b>. Resolve Free no es compatible.</td></tr>
     <tr><td><b>API token</b> de Platform</td><td>Lo gestiona tu administrador en Mediastream Platform (sección de cuenta / API). Pide uno con permiso de <b>lectura</b> y, si vas a subir, de <b>subida</b> y <b>publicación</b>.</td></tr>
     <tr><td>Internet</td><td>Acceso a <code>platform.mediastre.am</code> y <code>mdstrm.com</code>. En redes corporativas puede requerir una excepción.</td></tr>
-    <tr><td>Espacio en disco</td><td>Descargas y renders van a <code>~/Movies/Mediastream</code> (puedes cambiarlo). Antes de exportar el panel pide al menos 2 GB libres.</td></tr>
+    <tr><td>Espacio en disco</td><td>Descargas y renders van a <code>~/Movies/Mediastream</code> (Windows: <code>Videos\Mediastream</code>) (puedes cambiarlo). Antes de exportar el panel pide al menos 2 GB libres.</td></tr>
   </table>
   <div class="note"><b>Solo en Studio</b>El plugin necesita que Resolve esté abierto con un <b>proyecto</b> cargado: lo usa para importar, renderizar y leer tus presets de Deliver.</div>
   <div class="note"><b>Una sola vez</b>En Resolve: <i>Preferences → System → General → External scripting using → Local</i>. Sin esto, el plugin no puede hablar con Resolve.</div>
@@ -52,32 +52,51 @@
 
 <!-- 4 INSTALACION -->
 <section class="page">{{HDR}}
-  <p class="eyebrow">Paso a paso</p><h1>Instalación en macOS</h1>
+  <p class="eyebrow">Paso a paso</p><h1>Instalación</h1>
+  <p class="lead">Se instala con <b>un solo comando</b>. Así macOS y Windows no bloquean el plugin, que aún no está firmado. Primero <b>cierra DaVinci Resolve Studio</b>.</p>
+  <h2>macOS (Apple Silicon)</h2>
   <ol class="steps">
-    <li><b>Cierra DaVinci Resolve Studio.</b> Recomendado si ya lo tienes abierto.</li>
-    <li><b>Abre el instalador</b> <code>Mediastream-Resolve-1.1.5.pkg</code> con clic derecho → <b>Abrir</b>. El instalador aún no está firmado por Apple: macOS pide confirmación una sola vez. Si solo ves «No se puede abrir», ve a <i>Ajustes del Sistema → Privacidad y seguridad</i> y pulsa <b>Abrir de todos modos</b>.</li>
-    <li><b>Sigue el asistente</b> (Continuar → Instalar). Te pedirá la contraseña de tu Mac.</li>
-    <li><b>Abre Resolve Studio</b> y entra a <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
+    <li>Abre <b>Terminal</b>: <span class="kbd">⌘ Espacio</span>, escribe <i>Terminal</i> y pulsa Enter.</li>
+    <li>Copia este comando, pégalo en Terminal y pulsa Enter:<code style="display:block;white-space:nowrap;font-size:6.9pt;padding:2mm 2.5mm;margin:1.5mm 0;overflow:hidden">curl -fsSL https://github.com/dangel-byte/davinci-resolve-mcp/releases/latest/download/install-mac.sh | sh</code></li>
+    <li>Escribe la <b>contraseña de tu Mac</b> cuando la pida (no se ve mientras escribes) y pulsa Enter.</li>
+    <li>Cuando diga <b>«Listo»</b>, abre Resolve Studio → <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
+  </ol>
+  <h2>Windows 10/11</h2>
+  <ol class="steps">
+    <li>Abre el menú Inicio, escribe <i>PowerShell</i>, clic derecho → <b>Ejecutar como administrador</b> → <b>Sí</b>.</li>
+    <li>Copia este comando, pégalo en PowerShell (clic derecho pega) y pulsa Enter:<code style="display:block;white-space:nowrap;font-size:6.9pt;padding:2mm 2.5mm;margin:1.5mm 0;overflow:hidden">irm https://github.com/dangel-byte/davinci-resolve-mcp/releases/latest/download/install-windows.ps1 | iex</code></li>
+    <li>Cuando diga <b>«Listo»</b>, abre Resolve Studio → <i>Workspace → Workflow Integrations → Mediastream Platform</i>.</li>
   </ol>
   <div class="cols">
-    <div>
-      <h3>Qué se instala</h3>
-      <table>
-        <tr><th>Qué</th><th>Dónde</th></tr>
-        <tr><td>Plugin de Resolve Studio</td><td><code>/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.mediastream.platform</code></td></tr>
-      </table>
-      <p style="font-size:8.5pt;color:rgba(26,26,26,.65)">El instalador copia el módulo <code>WorkflowIntegration.node</code> desde tu propia instalación de Resolve (Blackmagic no permite redistribuirlo). Si Resolve no está instalado todavía, instala Resolve y vuelve a correr el instalador.</p>
-    </div>
     <div>
       <h3>¿Cómo sé que quedó bien?</h3>
       <ul>
         <li><i>Mediastream Platform</i> aparece en <i>Workspace → Workflow Integrations</i>.</li>
         <li>Al abrirlo, muestra <b>«Conecta tu cuenta»</b> (la primera vez).</li>
       </ul>
-      <div class="tip"><b>Actualizar</b>Para pasar a una versión nueva, corre el instalador nuevo encima: reemplaza la anterior y conserva tu token y tus ajustes.</div>
+      <div class="tip"><b>Actualizar</b>Repite el mismo comando: baja siempre la última versión, reemplaza la anterior y conserva tu token y tus ajustes.</div>
+    </div>
+    <div>
+      <h3>Qué se instala</h3>
+      <p style="font-size:8.5pt">Una carpeta <code>com.mediastream.platform</code> en <i>Workflow Integration Plugins</i> de Resolve (rutas en la página 13). El comando copia el módulo <code>WorkflowIntegration.node</code> desde tu propia instalación de Resolve (Blackmagic no permite redistribuirlo): instala Resolve antes que el plugin.</p>
+      <p style="font-size:8.5pt">El comando y los archivos están en el <code>LEEME.txt</code> del kit, por si prefieres copiarlos de ahí.</p>
     </div>
   </div>
-  <div class="warn"><b>Importante</b>Esta versión del instalador es para <b>macOS</b>. Para Windows todavía no hay instalador: pídelo a IT de Mediastream.</div>
+{{FTR}}</section>
+
+<!-- 4b INSTALADOR PKG (ALTERNATIVA) -->
+<section class="page">{{HDR}}
+  <p class="eyebrow">Alternativa en Mac</p><h1>Con el instalador .pkg</h1>
+  <p class="lead">Si prefieres no usar Terminal, el kit trae <code>Mediastream-Resolve-1.1.6.pkg</code>. Como aún no está firmado por Apple, macOS lo bloquea la primera vez y hay que autorizarlo a mano.</p>
+  <ol class="steps">
+    <li><b>Haz doble clic</b> en <code>Mediastream-Resolve-1.1.6.pkg</code>. macOS avisa que no puede verificarlo: pulsa <b>OK</b> (o <b>Listo</b>).</li>
+    <li>Abre <i>Ajustes del Sistema → Privacidad y seguridad</i> y baja hasta la sección <b>Seguridad</b>.</li>
+    <li>Junto al aviso sobre <i>Mediastream-Resolve</i>, pulsa <b>Abrir igualmente</b> y escribe tu contraseña.</li>
+    <li>En el aviso que vuelve a salir, pulsa <b>Abrir</b> y sigue el asistente (Continuar → Instalar).</li>
+  </ol>
+  <div class="warn"><b>Clic derecho → Abrir ya no sirve</b>Desde macOS 15 ese atajo dejó de saltar el bloqueo. El único camino con el instalador es <i>Privacidad y seguridad → Abrir igualmente</i>, y el botón aparece solo después de intentar abrirlo una vez.</div>
+  <div class="note"><b>Windows</b>No hay instalador <code>.exe</code>: en Windows se instala con el comando de la página anterior. Un <code>.exe</code> sin firma haría que SmartScreen mostrara «Windows protegió su PC».</div>
+  <div class="note"><b>Cuando el plugin esté firmado</b>Con la firma de Apple y la de Windows, el instalador se abrirá con doble clic, sin avisos. Está pendiente con IT (página 13).</div>
 {{FTR}}</section>
 
 <!-- 5 PRIMER USO -->
@@ -240,8 +259,10 @@
     <tr><td>«not enough disk space…»</td><td>Libera espacio o cambia la <b>Carpeta de exportación</b>.</td></tr>
     <tr><td>Subí un video y no lo encuentro en <b>Media</b></td><td>Está sin publicar. Publícalo en Platform o súbelo con <b>Publicar al subir</b>.</td></tr>
     <tr><td>Importar descarga pero no aparece en el Media Pool</td><td>Comprueba que haya un proyecto abierto. El archivo queda en <code>~/Movies/Mediastream</code>: impórtalo con <i>File → Import Media</i>.</td></tr>
-    <tr><td>macOS dice que el instalador «no se puede abrir»</td><td>Clic derecho → <b>Abrir</b>, o <i>Ajustes del Sistema → Privacidad y seguridad → Abrir de todos modos</i>.</td></tr>
-    <tr><td>El plugin no aparece en <i>Workflow Integrations</i></td><td>Solo existe en <b>Studio</b>. Reinicia Resolve. Si sigue sin aparecer, vuelve a correr el instalador con Resolve ya instalado.</td></tr>
+    <tr><td>macOS dice que el instalador «no se puede abrir»</td><td>Usa el comando de Terminal (página 4) o <i>Privacidad y seguridad → Abrir igualmente</i> (página 5).</td></tr>
+    <tr><td>PowerShell: «Sin permiso para escribir…»</td><td>Abre PowerShell con clic derecho → <b>Ejecutar como administrador</b> y repite el comando.</td></tr>
+    <tr><td>Windows o el antivirus bloquea <code>mediastream-engine.exe</code></td><td>Pasa con programas sin firma, sobre todo con el <i>Control inteligente de aplicaciones</i> de Windows 11. Pide a IT una excepción para la carpeta del plugin hasta que esté firmado.</td></tr>
+    <tr><td>El plugin no aparece en <i>Workflow Integrations</i></td><td>Solo existe en <b>Studio</b>. Reinicia Resolve. Si sigue sin aparecer, repite el comando de instalación con Resolve ya instalado.</td></tr>
   </table>
   <div class="card dark">
     <p class="eyebrow">Pedir ayuda</p>
@@ -258,23 +279,24 @@
       <h2>Desinstalar</h2>
       <ol class="steps">
         <li>(Opcional) En el plugin: <b>Configuración → Borrar</b> para quitar tu token del llavero.</li>
-        <li>Abre <b>Desinstalar Mediastream.command</b> (viene junto al instalador) con clic derecho → <b>Abrir</b>.</li>
-        <li>Escribe la contraseña de tu Mac. Se quita el plugin de Resolve.</li>
+        <li><b>Mac</b>: en Terminal, <code>curl -fsSL …/install-mac.sh | sh -s -- --uninstall</code> (el mismo comando de instalación con <code>-s -- --uninstall</code> al final) y tu contraseña.</li>
+        <li><b>Windows</b>: en PowerShell como administrador, <code>$env:MS_UNINSTALL=1;</code> seguido del comando de instalación.</li>
       </ol>
       <h2>Actualizar</h2>
-      <p>Corre el instalador nuevo encima de la versión anterior. Si tu equipo de IT configuró un aviso de actualizaciones, el plugin te mostrará un aviso con la dirección de descarga; <b>nunca se instala nada solo</b>.</p>
+      <p>Repite el comando de instalación: siempre baja la última versión. Si tu equipo de IT configuró un aviso de actualizaciones, el plugin te mostrará un aviso con la dirección de descarga; <b>nunca se instala nada solo</b>.</p>
     </div>
     <div>
       <h2>Datos para IT</h2>
       <table>
-        <tr><td style="width:36%"><b>Versión</b></td><td>1.1.5 (instalador sin firmar, arm64; el motor del plugin va dentro de su carpeta)</td></tr>
-        <tr><td><b>Token</b></td><td>Llavero de macOS, servicio <code>mediastream-resolve</code></td></tr>
-        <tr><td><b>Ajustes y log</b></td><td><code>~/.config/mediastream-resolve/</code> (<code>prefs.json</code>, <code>panel.log</code>)</td></tr>
+        <tr><td style="width:36%"><b>Versión</b></td><td>1.1.6 · sin firmar · macOS arm64 y Windows x64. Descargas en <i>github.com/dangel-byte/davinci-resolve-mcp/releases</i></td></tr>
+        <tr><td><b>Carpeta</b></td><td>Mac: <code>/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.mediastream.platform</code> · Windows: <code>%ProgramData%\Blackmagic Design\DaVinci Resolve\Support\Workflow Integration Plugins\com.mediastream.platform</code></td></tr>
+        <tr><td><b>Token</b></td><td>Llavero de macOS / Administrador de credenciales de Windows, servicio <code>mediastream-resolve</code></td></tr>
+        <tr><td><b>Ajustes y log</b></td><td><code>~/.config/mediastream-resolve/</code> · Windows <code>%APPDATA%\mediastream-resolve\</code> (<code>prefs.json</code>, <code>panel.log</code>)</td></tr>
         <tr><td><b>Red</b></td><td>HTTPS a <code>platform.mediastre.am</code> y <code>*.mdstrm.com</code></td></tr>
         <tr><td><b>Servicio local</b></td><td>Solo <code>127.0.0.1</code>, puerto libre, con clave por sesión. Lo muestra la ventana del plugin dentro de Resolve; no se abre navegador.</td></tr>
         <tr><td><b>Avisos de versión</b></td><td>Apagados salvo que se defina <code>MEDIASTREAM_UPDATE_URL</code>; <code>MEDIASTREAM_NO_UPDATE_CHECK=1</code> los desactiva</td></tr>
       </table>
-      <div class="note"><b>Pendiente para distribución amplia</b>Firma y notarización de Apple, instalador de Windows y publicación de versiones.</div>
+      <div class="note"><b>Pendiente para distribución amplia</b>Firma de código: Apple Developer ID con notarización y certificado de Windows. Quita todos los avisos y permite el doble clic.</div>
     </div>
   </div>
 {{FTR}}</section>

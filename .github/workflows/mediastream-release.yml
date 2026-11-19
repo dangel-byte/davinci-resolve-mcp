@@ -1,0 +1,116 @@
+# Mediastream plugin for Resolve: build the frozen engine on macOS (arm64) and Windows (x64), smoke-test it,
+# publish a GitHub release, then install it with the one-line commands exactly as a user would.
+#   git tag mediastream-vX.Y.Z && git push fork mediastream-vX.Y.Z
+# (Does not match the upstream npm workflow, which listens to "v*".)
+name: mediastream-release
+
+on:
+  push:
+    tags: ["mediastream-v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: macos-14
+            asset: mediastream-resolve-macos-arm64.tar.gz
+            exe: mediastream-engine
+          - os: windows-latest
+            asset: mediastream-resolve-windows-x64.zip
+            exe: mediastream-engine.exe
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Tag matches mediastream_resolve/__init__.py
+        run: |
+          v=$(python -c "import re;print(re.search(r'\"([^\"]+)\"',open('mediastream_resolve/__init__.py').read()).group(1))")
+          test "mediastream-v$v" = "$GITHUB_REF_NAME" || { echo "tag $GITHUB_REF_NAME != version $v"; exit 1; }
+      - run: python -m pip install -q -r packaging/requirements-build.txt
+      - run: python packaging/build_engine.py dist
+      - name: Smoke test the frozen engine
+        run: python packaging/smoke_engine.py "dist/mediastream-engine/${{ matrix.exe }}"
+      - name: Windows Credential Manager round trip (untested code path; reported, not blocking)
+        continue-on-error: true
+        if: runner.os == 'Windows'
+        run: |
+          python -c "
+          from mediastream_resolve.panel import Keychain
+          k = Keychain(); assert k.kind == 'win'
+          k.save('ci-test-token'); assert Keychain().load() == 'ci-test-token'
+          k.delete(); assert Keychain().load() is None
+          print('wincred OK')"
+      - name: Plugin folder
+        run: |
+          P=pkg/com.mediastream.platform; mkdir -p "$P"
+          cp resolve-plugin/com.mediastream.platform/{main.js,manifest.xml,package.json} "$P/"
+          cp -R dist/mediastream-engine "$P/engine"
+      - name: Archive (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          tar -czf "${{ matrix.asset }}" -C pkg com.mediastream.platform
+          packaging/build_pkg_macos.sh dist
+          cp dist/Mediastream-Resolve-*.pkg .
+      - name: Archive (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path pkg/com.mediastream.platform -DestinationPath "${{ matrix.asset }}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ runner.os }}
+          path: |
+            ${{ matrix.asset }}
+            Mediastream-Resolve-*.pkg
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp packaging/install-mac.sh packaging/install-windows.ps1 out/
+          gh release create "$GITHUB_REF_NAME" out/* --title "Mediastream para DaVinci Resolve ${GITHUB_REF_NAME#mediastream-v}" \
+            --notes "Instalar sin instalador: ver la guia PDF. macOS (Apple Silicon): curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/install-mac.sh | sh  ·  Windows (PowerShell): irm https://github.com/${{ github.repository }}/releases/latest/download/install-windows.ps1 | iex"
+
+  verify:
+    needs: release
+    strategy:
+      matrix:
+        os: [macos-14, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: One-line install (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          export MS_TEST_ROOT="$RUNNER_TEMP/root"
+          mkdir -p "$MS_TEST_ROOT/Library/Application Support/Blackmagic Design/DaVinci Resolve"
+          curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/install-mac.sh | sh
+          python packaging/smoke_engine.py "$(python -c "import json,sys;print(json.load(open(sys.argv[1]))['engine'])" "$MS_TEST_ROOT/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.mediastream.platform/config.json")"
+      - name: One-line install (Windows PowerShell 5.1, as users run it)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $env:MS_TEST_ROOT = "$env:RUNNER_TEMP\root"; New-Item -ItemType Directory -Force $env:MS_TEST_ROOT | Out-Null
+          irm https://github.com/${{ github.repository }}/releases/latest/download/install-windows.ps1 | iex
+          $cfg = Get-Content "$env:MS_TEST_ROOT\Workflow Integration Plugins\com.mediastream.platform\config.json" -Raw | ConvertFrom-Json
+          python packaging/smoke_engine.py $cfg.engine
+          if ($LASTEXITCODE) { exit 1 }
