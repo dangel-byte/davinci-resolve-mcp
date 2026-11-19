@@ -1,6 +1,8 @@
-# Mediastream plugin for Resolve: build the frozen engine on macOS (arm64) and Windows (x64), smoke-test it,
-# publish a GitHub release, then install it with the one-line commands exactly as a user would.
-#   git tag mediastream-vX.Y.Z && git push fork mediastream-vX.Y.Z
+# Mediastream plugin for Resolve: build the frozen Windows (x64) engine, smoke-test it, publish the GitHub release,
+# then install it with the one-line command exactly as a user would.
+#   git tag mediastream-vX.Y.Z && git push fork mediastream-vX.Y.Z   then, on a Mac:  packaging/publish_mac_release.sh
+# ponytail: macOS assets are built locally because GitHub's macOS arm64 runners never picked up the job
+# (capacity, 2026-11-19). Add a macos-15 entry back to the matrix if they become reliable.
 # (Does not match the upstream npm workflow, which listens to "v*".)
 name: mediastream-release
 
@@ -16,9 +18,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: macos-15
-            asset: mediastream-resolve-macos-arm64.tar.gz
-            exe: mediastream-engine
           - os: windows-latest
             asset: mediastream-resolve-windows-x64.zip
             exe: mediastream-engine.exe
@@ -54,12 +53,6 @@ jobs:
           P=pkg/com.mediastream.platform; mkdir -p "$P"
           cp resolve-plugin/com.mediastream.platform/{main.js,manifest.xml,package.json} "$P/"
           cp -R dist/mediastream-engine "$P/engine"
-      - name: Archive (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          tar -czf "${{ matrix.asset }}" -C pkg com.mediastream.platform
-          packaging/build_pkg_macos.sh dist
-          cp dist/Mediastream-Resolve-*.pkg .
       - name: Archive (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
@@ -67,9 +60,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ runner.os }}
-          path: |
-            ${{ matrix.asset }}
-            Mediastream-Resolve-*.pkg
+          path: ${{ matrix.asset }}
 
   release:
     needs: build
@@ -91,20 +82,13 @@ jobs:
     needs: release
     strategy:
       matrix:
-        os: [macos-15, windows-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: One-line install (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          export MS_TEST_ROOT="$RUNNER_TEMP/root"
-          mkdir -p "$MS_TEST_ROOT/Library/Application Support/Blackmagic Design/DaVinci Resolve"
-          curl -fsSL https://github.com/${{ github.repository }}/releases/latest/download/install-mac.sh | sh
-          python packaging/smoke_engine.py "$(python -c "import json,sys;print(json.load(open(sys.argv[1]))['engine'])" "$MS_TEST_ROOT/Library/Application Support/Blackmagic Design/DaVinci Resolve/Workflow Integration Plugins/com.mediastream.platform/config.json")"
       - name: One-line install (Windows PowerShell 5.1, as users run it)
         if: runner.os == 'Windows'
         shell: powershell
