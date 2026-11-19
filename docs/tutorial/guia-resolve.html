@@ -84,19 +84,17 @@
   </div>
 {{FTR}}</section>
 
-<!-- 4b INSTALADOR PKG (ALTERNATIVA) -->
+<!-- 4b POR QUE NO HAY DOBLE CLIC -->
 <section class="page">{{HDR}}
-  <p class="eyebrow">Alternativa en Mac</p><h1>Con el instalador .pkg</h1>
-  <p class="lead">Si prefieres no usar Terminal, el kit trae <code>Mediastream-Resolve-1.1.6.pkg</code>. Como aún no está firmado por Apple, macOS lo bloquea la primera vez y hay que autorizarlo a mano.</p>
-  <ol class="steps">
-    <li><b>Haz doble clic</b> en <code>Mediastream-Resolve-1.1.6.pkg</code>. macOS avisa que no puede verificarlo: pulsa <b>OK</b> (o <b>Listo</b>).</li>
-    <li>Abre <i>Ajustes del Sistema → Privacidad y seguridad</i> y baja hasta la sección <b>Seguridad</b>.</li>
-    <li>Junto al aviso sobre <i>Mediastream-Resolve</i>, pulsa <b>Abrir igualmente</b> y escribe tu contraseña.</li>
-    <li>En el aviso que vuelve a salir, pulsa <b>Abrir</b> y sigue el asistente (Continuar → Instalar).</li>
-  </ol>
-  <div class="warn"><b>Clic derecho → Abrir ya no sirve</b>Desde macOS 15 ese atajo dejó de saltar el bloqueo. El único camino con el instalador es <i>Privacidad y seguridad → Abrir igualmente</i>, y el botón aparece solo después de intentar abrirlo una vez.</div>
-  <div class="note"><b>Windows</b>No hay instalador <code>.exe</code>: en Windows se instala con el comando de la página anterior. Un <code>.exe</code> sin firma haría que SmartScreen mostrara «Windows protegió su PC».</div>
-  <div class="note"><b>Cuando el plugin esté firmado</b>Con la firma de Apple y la de Windows, el instalador se abrirá con doble clic, sin avisos. Está pendiente con IT (página 13).</div>
+  <p class="eyebrow">Antes de que preguntes</p><h1>¿Y el instalador con doble clic?</h1>
+  <p class="lead">Por ahora no se reparte. El plugin todavía no tiene la <b>firma de Apple</b>, y macOS muestra este aviso con cualquier instalador sin firma que llega por descarga, correo o Drive:</p>
+  <div class="card"><p style="margin:0"><i>«Apple no pudo verificar que “Mediastream-Resolve.pkg” no contenga malware que pueda dañar tu Mac o poner en riesgo tu privacidad.»</i></p></div>
+  <div class="warn"><b>No es malware</b>Es el aviso estándar de macOS para programas que aún no pasaron por la verificación (notarización) de Apple. Si te llega un <code>.pkg</code> de Mediastream y ves este aviso, pulsa <b>Listo</b> e instala con el comando de la página 4: hace lo mismo y macOS no lo bloquea.</div>
+  <h2>Por qué el comando no recibe el aviso</h2>
+  <p>macOS marca los archivos que bajas con el navegador, Drive o el correo y los revisa al abrirlos. Lo que descarga el comando <code>curl</code> no lleva esa marca. El contenido es el mismo y viene de la misma publicación oficial.</p>
+  <div class="note"><b>Windows</b>Pasa lo mismo: un <code>.exe</code> sin firma haría que SmartScreen mostrara «Windows protegió su PC». Por eso en Windows también se instala con el comando.</div>
+  <div class="note"><b>Cuando el plugin esté firmado</b>Con la firma de Apple (Developer ID con notarización) y la de Windows, el instalador se abrirá con doble clic y sin avisos. Está pendiente: Mediastream ya tiene cuenta de Apple Developer.</div>
+  <div class="note"><b>Para IT</b>El <code>.pkg</code> sin firma está en <i>github.com/dangel-byte/davinci-resolve-mcp/releases</i>. Se autoriza una vez en <i>Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente</i> (clic derecho → Abrir dejó de funcionar en macOS 15).</div>
 {{FTR}}</section>
 
 <!-- 5 PRIMER USO -->
@@ -259,7 +257,7 @@
     <tr><td>«not enough disk space…»</td><td>Libera espacio o cambia la <b>Carpeta de exportación</b>.</td></tr>
     <tr><td>Subí un video y no lo encuentro en <b>Media</b></td><td>Está sin publicar. Publícalo en Platform o súbelo con <b>Publicar al subir</b>.</td></tr>
     <tr><td>Importar descarga pero no aparece en el Media Pool</td><td>Comprueba que haya un proyecto abierto. El archivo queda en <code>~/Movies/Mediastream</code>: impórtalo con <i>File → Import Media</i>.</td></tr>
-    <tr><td>macOS dice que el instalador «no se puede abrir»</td><td>Usa el comando de Terminal (página 4) o <i>Privacidad y seguridad → Abrir igualmente</i> (página 5).</td></tr>
+    <tr><td>macOS dice que no puede verificar que el instalador «no contenga malware»</td><td>No es malware: es un instalador sin firma de Apple (página 5). Instala con el comando de Terminal (página 4).</td></tr>
     <tr><td>PowerShell: «Sin permiso para escribir…»</td><td>Abre PowerShell con clic derecho → <b>Ejecutar como administrador</b> y repite el comando.</td></tr>
     <tr><td>Windows o el antivirus bloquea <code>mediastream-engine.exe</code></td><td>Pasa con programas sin firma, sobre todo con el <i>Control inteligente de aplicaciones</i> de Windows 11. Pide a IT una excepción para la carpeta del plugin hasta que esté firmado.</td></tr>
     <tr><td>El plugin no aparece en <i>Workflow Integrations</i></td><td>Solo existe en <b>Studio</b>. Reinicia Resolve. Si sigue sin aparecer, repite el comando de instalación con Resolve ya instalado.</td></tr>
