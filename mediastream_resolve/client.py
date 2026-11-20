@@ -10,6 +10,7 @@ import json
 import os
 import re
 import shutil
+import ssl
 import sys
 import time
 import urllib.error
@@ -21,6 +22,18 @@ from typing import Any, Dict, List, Optional
 BASE = "https://platform.mediastre.am"
 CHUNK_BYTES = 10 * 1024 * 1024
 TIMEOUT = 60
+
+
+def _ssl_context() -> ssl.SSLContext:
+    """python.org's macOS Python ships with no root CAs until "Install Certificates.command" runs;
+    fall back to the OS bundle so HTTPS works anyway (CERTIFICATE_VERIFY_FAILED otherwise)."""
+    ctx = ssl.create_default_context()
+    if not ctx.cert_store_stats().get("x509_ca") and os.path.exists("/etc/ssl/cert.pem"):
+        ctx.load_verify_locations("/etc/ssl/cert.pem")
+    return ctx
+
+
+SSL_CONTEXT = _ssl_context()
 
 
 class MediastreamError(RuntimeError):
@@ -121,7 +134,7 @@ def _request(method: str, url: str, token: Optional[str] = None, data: Optional[
         h["X-Api-Token"] = token
     req = urllib.request.Request(url, data=data, method=method, headers=h)
     try:
-        return urllib.request.urlopen(req, timeout=timeout)
+        return urllib.request.urlopen(req, timeout=timeout, context=SSL_CONTEXT)
     except urllib.error.HTTPError as e:
         body = e.read(300).decode("utf-8", "replace").replace("\n", " ")
         raise MediastreamError(f"HTTP {e.code} {method} {urllib.parse.urlsplit(url).path}: {body}") from None

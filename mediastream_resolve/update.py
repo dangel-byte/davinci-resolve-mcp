@@ -10,6 +10,7 @@ import time
 import urllib.request
 
 from . import __version__
+from .client import SSL_CONTEXT
 
 DAY = 86400
 
@@ -37,7 +38,7 @@ def status(prefs, cache_file, fetch=None, now=None):
         cached = {}
     if now - cached.get("checked", 0) > DAY:
         try:
-            m = json.load((fetch or (lambda u: urllib.request.urlopen(u, timeout=10)))(url))
+            m = json.load((fetch or (lambda u: urllib.request.urlopen(u, timeout=10, context=SSL_CONTEXT)))(url))
             cached = {"checked": now, "latest": str(m["version"]), "url": str(m.get("url", ""))}
         except Exception:  # offline or bad manifest: retry next launch, never block the panel
             cached = {**cached, "checked": now - DAY + 3600}
