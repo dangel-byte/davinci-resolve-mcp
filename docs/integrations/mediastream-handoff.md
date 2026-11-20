@@ -4,11 +4,11 @@ Dos plugins que viven **dentro** de su programa (sin navegador, sin app aparte, 
 
 | | DaVinci Resolve | Premiere Pro |
 |---|---|---|
-| Versión | 1.1.7 | 1.1.7 |
+| Versión | 1.1.8 | 1.1.8 |
 | Tipo | Workflow Integration (solo **Studio**) | Panel UXP (`.ccx`, Premiere 25.6+) |
 | Repo | `dangel-byte/davinci-resolve-mcp`, rama `feat/mediastream-platform` (público) | `dangel-byte/premiere-uxp`, ramas `main` y `parity/resolve-hardening` (**privado**: hay que invitar a IT) |
 | Origen | Portado de `luchoahumada/premiere-uxp` | Copia de `luchoahumada/premiere-uxp` (remoto `upstream`, solo lectura) |
-| Instalador | `Mediastream-Resolve-1.1.7.pkg` (macOS arm64, sin firmar) | `com.mediastream.premiere-1.1.7.ccx` (sin firmar) |
+| Instalador | `Mediastream-Resolve-1.1.8.pkg` (macOS arm64, sin firmar) | `com.mediastream.premiere-1.1.8.ccx` (sin firmar) |
 | Guía | `Guia-Mediastream-DaVinci-Resolve.pdf` (12 págs.) | `Guia-Mediastream-Premiere-Pro.pdf` (11 págs.) |
 
 Kit con instaladores, PDF y capturas: `mediastream-plugins-kit/`. Fuentes de las guías: `docs/tutorial/` en cada repo (`build_pdf.py`). La tabla de paridad entre ambos está en `PARIDAD.md` del repo de Premiere.
@@ -61,5 +61,5 @@ El cliente no puede borrar medias; hay que borrarlas desde la web. Quedan medias
 - **Premiere.** `scripts/build-ccx.sh` empaqueta solo el código del panel, iconos y presets (el `.ccx` anterior incluía `.git`).
 - **Blackmagic.** No incluir nunca `WorkflowIntegration.node` en el repo: el instalador lo copia desde la instalación de Resolve del usuario. Requiere *Preferences → System → General → External scripting using → Local*.
 - **Carpeta vigilada: congelada.** Funciona tal como está en ambos plugins; no se desarrolla ni se corrige más hasta que un canal la pida. Limitaciones conocidas: estabilidad de archivo por tamaño/mtime (puede subir un export lento incompleto), política distinta en Resolve (aprobación) y Premiere (cola automática).
-- **SSL en macOS (20 nov, sin publicar).** En otro Mac la 1.1.7 falla con `CERTIFICATE_VERIFY_FAILED`: el Python congelado busca los CA en la ruta del Mac de compilación (`/Library/Frameworks/Python.framework/.../cert.pem`) y arranca con 0. Arreglo en `client.py` (`SSL_CONTEXT`, usado también por `update.py`): si no hay CA, carga `/etc/ssl/cert.pem` del sistema. Probado simulando almacén vacío (0 → 123 CA, HTTP 200 contra Platform) y 32 tests. Falta sacar 1.1.8 (`.pkg` + `.exe`), subirla al kit de Drive y probarla en el Mac donde falló.
+- **SSL en macOS (20 nov, sin publicar).** En otro Mac la 1.1.8 falla con `CERTIFICATE_VERIFY_FAILED`: el Python congelado busca los CA en la ruta del Mac de compilación (`/Library/Frameworks/Python.framework/.../cert.pem`) y arranca con 0. Arreglo en `client.py` (`SSL_CONTEXT`, usado también por `update.py`): si no hay CA, carga `/etc/ssl/cert.pem` del sistema. Probado simulando almacén vacío (0 → 123 CA, HTTP 200 contra Platform) y 32 tests. Falta sacar 1.1.8 (`.pkg` + `.exe`), subirla al kit de Drive y probarla en el Mac donde falló.
 - **Seguridad.** El token no se guarda en archivos ni en el log. Subida con lista de extensiones permitidas, sin carpetas ocultas ni enlaces simbólicos. El servicio local escucha solo en `127.0.0.1` con clave por sesión.
